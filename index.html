@@ -410,15 +410,7 @@
           <input type="hidden" id="modal-usuario-id">
           <div class="field">
             <label>Nome</label>
-            <input type="text" id="modal-nome" placeholder="Nome completo">
-          </div>
-          <div class="field">
-            <label>Email</label>
-            <input type="email" id="modal-email" placeholder="email@grupohol.com.br">
-          </div>
-          <div class="field">
-            <label>Senha <span id="modal-senha-hint" style="font-weight:400;color:var(--text-dim)">(obrigatória para novo usuário)</span></label>
-            <input type="password" id="modal-senha" placeholder="Deixe em branco para manter">
+            <input type="text" id="modal-nome" placeholder="Nome do usuário">
           </div>
           <div class="field">
             <label>Perfil</label>
@@ -794,60 +786,90 @@
 
 <script>
 // ══════════════════════════════════════════════════════════════════════
-// CONFIG — substitua pela sua connection string do Neon via API proxy
-// Como HTML puro não pode conectar diretamente ao PostgreSQL,
-// usamos a Anthropic API como intermediário para executar queries
+// CONFIG — Supabase
 // ══════════════════════════════════════════════════════════════════════
+const SUPABASE_URL = "https://rpavxnjchfmeiacnumpk.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwYXZ4bmpjaGZtZWlhY251bXBrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0Nzg2MjcsImV4cCI6MjA5MDA1NDYyN30.50z2VN6zogv-HWXJHTVXSzAw-xP9mJfodip-iYEhmlA";
 
-const NEON_URL = "postgresql://neondb_owner:npg_A3ONYCJKVjw9@ep-rapid-moon-am0yk3yl-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
-const ANTHROPIC_KEY = "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";
+const sb = {
+  async from(table) { return new SBQuery(table); }
+};
+
+class SBQuery {
+  constructor(table) {
+    this.table = table;
+    this._filters = [];
+    this._select = '*';
+    this._order = null;
+    this._limit = null;
+  }
+  select(cols) { this._select = cols; return this; }
+  eq(col, val) { this._filters.push(`${col}=eq.${encodeURIComponent(val)}`); return this; }
+  order(col, opts={}) { this._order = `${col}.${opts.ascending===false?'desc':'asc'}`; return this; }
+  limit(n) { this._limit = n; return this; }
+
+  async _fetch(method, body) {
+    let url = `${SUPABASE_URL}/rest/v1/${this.table}`;
+    const params = [`select=${encodeURIComponent(this._select)}`];
+    this._filters.forEach(f => params.push(f));
+    if (this._order) params.push(`order=${this._order}`);
+    if (this._limit) params.push(`limit=${this._limit}`);
+    if (method === 'GET' || method === 'DELETE') url += '?' + params.join('&');
+
+    const headers = {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    };
+
+    const resp = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    const text = await resp.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = []; }
+    if (!resp.ok) return { data: null, error: data.message || text };
+    return { data: Array.isArray(data) ? data : [data], error: null };
+  }
+
+  async get() { return this._fetch('GET'); }
+  async insert(body) {
+    const url = `${SUPABASE_URL}/rest/v1/${this.table}`;
+    const headers = {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    };
+    const resp = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+    const text = await resp.text();
+    let data; try { data = JSON.parse(text); } catch { data = []; }
+    if (!resp.ok) return { data: null, error: data.message || text };
+    return { data: Array.isArray(data) ? data : [data], error: null };
+  }
+  async update(body) {
+    let url = `${SUPABASE_URL}/rest/v1/${this.table}`;
+    const params = this._filters.map(f => f);
+    if (params.length) url += '?' + params.join('&');
+    const headers = {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    };
+    const resp = await fetch(url, { method: 'PATCH', headers, body: JSON.stringify(body) });
+    const text = await resp.text();
+    let data; try { data = JSON.parse(text); } catch { data = []; }
+    if (!resp.ok) return { data: null, error: data.message || text };
+    return { data: Array.isArray(data) ? data : [data], error: null };
+  }
+  async delete() { return this._fetch('DELETE'); }
+}
 
 // Estado global
 let currentUser = null;
 let todosEventos = [];
 let currentViewId = null;
 let editingId = null;
-
-// ══════════════════════════════════════════════════════════════════════
-// DB via Anthropic API (Claude como proxy para Neon)
-// ══════════════════════════════════════════════════════════════════════
-async function dbQuery(sql, params = []) {
-  const prompt = `You are a PostgreSQL query executor proxy. 
-Connection string: ${NEON_URL}
-
-Execute this SQL and return ONLY a JSON object with structure:
-{"rows": [...], "rowCount": N, "error": null}
-
-If there's an error, return: {"rows": [], "rowCount": 0, "error": "error message"}
-
-SQL: ${sql}
-Parameters: ${JSON.stringify(params)}
-
-IMPORTANT: Return ONLY the JSON, no explanation, no markdown.`;
-
-  const resp = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": ANTHROPIC_KEY,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true"
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1000,
-      messages: [{ role: "user", content: prompt }]
-    })
-  });
-  const data = await resp.json();
-  const text = data.content.map(c => c.text || "").join("").trim();
-  try {
-    const clean = text.replace(/```json|```/g, "").trim();
-    return JSON.parse(clean);
-  } catch(e) {
-    return { rows: [], rowCount: 0, error: "Parse error: " + text };
-  }
-}
 
 // ══════════════════════════════════════════════════════════════════════
 // AUTH — sem senha, só escolhe o nome
@@ -913,10 +935,12 @@ function showPage(page) {
 // DASHBOARD
 // ══════════════════════════════════════════════════════════════════════
 async function loadDashboard() {
-  const result = await dbQuery("SELECT * FROM eventos ORDER BY data_inicio DESC LIMIT 50");
-  if (result.error) { document.getElementById('dashboard-table-body').innerHTML = `<div class="loading">Erro: ${result.error}</div>`; return; }
+  const q = new SBQuery('eventos');
+  q.order('data_inicio', {ascending: false}).limit(50);
+  const { data, error } = await q.get();
+  if (error) { document.getElementById('dashboard-table-body').innerHTML = `<div class="loading">Erro: ${error}</div>`; return; }
 
-  todosEventos = result.rows || [];
+  todosEventos = data || [];
   const total = todosEventos.length;
   const confirmados = todosEventos.filter(e => e.status === 'confirmado').length;
   const rascunhos = todosEventos.filter(e => e.status === 'rascunho').length;
@@ -932,14 +956,11 @@ async function loadDashboard() {
 
 async function loadEventos() {
   document.getElementById('eventos-table-body').innerHTML = '<div class="loading"><div class="spinner"></div> Carregando eventos...</div>';
-  const result = await dbQuery(`
-    SELECT e.*, u.nome as criado_por_nome 
-    FROM eventos e 
-    LEFT JOIN usuarios u ON e.criado_por = u.id 
-    ORDER BY e.data_inicio DESC
-  `);
-  if (result.error) { document.getElementById('eventos-table-body').innerHTML = `<div class="loading">Erro: ${result.error}</div>`; return; }
-  todosEventos = result.rows || [];
+  const q = new SBQuery('eventos');
+  q.order('data_inicio', {ascending: false});
+  const { data, error } = await q.get();
+  if (error) { document.getElementById('eventos-table-body').innerHTML = `<div class="loading">Erro: ${error}</div>`; return; }
+  todosEventos = data || [];
   aplicarFiltros();
 }
 
@@ -1119,28 +1140,25 @@ async function salvarOS() {
     menores: document.getElementById('f-menores').value,
     montagem: document.getElementById('f-montagem').value,
     montagem_descricao: document.getElementById('f-montagem-desc').value,
-    brigada: JSON.stringify(brigada),
-    menu_bar: JSON.stringify(menuBar),
-    menu_cozinha: JSON.stringify(menuCozinha),
+    brigada: brigada,
+    menu_bar: menuBar,
+    menu_cozinha: menuCozinha,
     campo_livre: document.getElementById('f-campo-livre').value,
-    criado_por: currentUser.id,
+    criado_por: currentUser.nome,
   };
 
   showOSAlert("Salvando...", "success");
 
-  let sql, params;
+  let result;
   if (editingId) {
-    const sets = Object.keys(dados).map((k, i) => `${k} = $${i+1}`).join(', ');
-    sql = `UPDATE eventos SET ${sets}, updated_at = NOW() WHERE id = $${Object.keys(dados).length+1}`;
-    params = [...Object.values(dados), editingId];
+    const q = new SBQuery('eventos');
+    q.eq('id', editingId);
+    result = await q.update({ ...dados, updated_at: new Date().toISOString() });
   } else {
-    const cols = Object.keys(dados).join(', ');
-    const vals = Object.keys(dados).map((_, i) => `$${i+1}`).join(', ');
-    sql = `INSERT INTO eventos (${cols}) VALUES (${vals})`;
-    params = Object.values(dados);
+    const q = new SBQuery('eventos');
+    result = await q.insert(dados);
   }
 
-  const result = await dbQuery(sql, params);
   if (result.error) { showOSAlert("Erro ao salvar: " + result.error, "error"); return; }
 
   showOSAlert("Ordem de Serviço salva com sucesso!", "success");
@@ -1160,9 +1178,11 @@ function showOSAlert(msg, type) {
 // ══════════════════════════════════════════════════════════════════════
 async function verOS(id) {
   currentViewId = id;
-  const result = await dbQuery("SELECT * FROM eventos WHERE id = $1", [id]);
-  if (!result.rows || result.rows.length === 0) return;
-  const e = result.rows[0];
+  const q = new SBQuery('eventos');
+  q.eq('id', id);
+  const { data, error } = await q.get();
+  if (!data || data.length === 0) return;
+  const e = data[0];
 
   const brigada = tryParse(e.brigada, []);
   const menuBar = tryParse(e.menu_bar, []);
@@ -1269,9 +1289,11 @@ function menuTable(rows) {
 
 async function editarOS(id) {
   editingId = id;
-  const result = await dbQuery("SELECT * FROM eventos WHERE id = $1", [id]);
-  if (!result.rows || result.rows.length === 0) return;
-  const e = result.rows[0];
+  const q = new SBQuery('eventos');
+  q.eq('id', id);
+  const { data, error } = await q.get();
+  if (!data || data.length === 0) return;
+  const e = data[0];
 
   document.getElementById('os-form-title').textContent = 'Editar O.S. — ' + (e.nome_evento || '');
   document.getElementById('os-id').value = id;
@@ -1365,41 +1387,37 @@ function tryParse(val, fallback) {
 // ══════════════════════════════════════════════════════════════════════
 async function loadUsuarios() {
   document.getElementById('usuarios-table-body').innerHTML = '<div class="loading"><div class="spinner"></div> Carregando...</div>';
-  const result = await dbQuery("SELECT id, nome, email, perfil, casa, created_at FROM usuarios ORDER BY id");
-  if (result.error || !result.rows) {
-    document.getElementById('usuarios-table-body').innerHTML = `<div class="loading">Erro: ${result.error}</div>`;
+  const q = new SBQuery('usuarios');
+  q.order('id', {ascending: true});
+  const { data, error } = await q.get();
+  if (error || !data) {
+    document.getElementById('usuarios-table-body').innerHTML = `<div class="loading">Erro: ${error}</div>`;
     return;
   }
-  const rows = result.rows;
-  if (!rows.length) {
+  if (!data.length) {
     document.getElementById('usuarios-table-body').innerHTML = '<div class="empty-state"><div class="empty-icon">👤</div><p>Nenhum usuário cadastrado.</p></div>';
     return;
   }
   document.getElementById('usuarios-table-body').innerHTML = `<table>
-    <thead><tr><th>Nome</th><th>Email</th><th>Perfil</th><th>Casa</th><th>Cadastro</th><th>Ações</th></tr></thead>
-    <tbody>${rows.map(u => `<tr>
+    <thead><tr><th>Nome</th><th>Perfil</th><th>Casa</th><th>Ações</th></tr></thead>
+    <tbody>${data.map(u => `<tr>
       <td><strong>${u.nome}</strong></td>
-      <td style="color:var(--text-muted)">${u.email}</td>
       <td><span class="badge ${u.perfil==='admin'?'badge-confirmado':u.perfil==='comercial'?'badge-realizado':'badge-rascunho'}">${u.perfil}</span></td>
       <td>${u.casa || '—'}</td>
-      <td style="font-size:12px;color:var(--text-muted)">${u.created_at ? new Date(u.created_at).toLocaleDateString('pt-BR') : '—'}</td>
       <td>
-        <button class="btn btn-outline btn-sm" onclick="abrirModalUsuario(${u.id},'${u.nome}','${u.email}','${u.perfil}','${u.casa||''}')">Editar</button>
-        ${u.id !== currentUser.id ? `<button class="btn btn-danger btn-sm" onclick="excluirUsuario(${u.id},'${u.nome}')">Excluir</button>` : ''}
+        <button class="btn btn-outline btn-sm" onclick="abrirModalUsuario(${u.id},'${u.nome}','${u.perfil}','${u.casa||''}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="excluirUsuario(${u.id},'${u.nome}')">Excluir</button>
       </td>
     </tr>`).join('')}</tbody>
   </table>`;
 }
 
-function abrirModalUsuario(id, nome, email, perfil, casa) {
+function abrirModalUsuario(id, nome, perfil, casa) {
   document.getElementById('modal-usuario-id').value = id || '';
   document.getElementById('modal-nome').value = nome || '';
-  document.getElementById('modal-email').value = email || '';
-  document.getElementById('modal-senha').value = '';
   document.getElementById('modal-perfil').value = perfil || 'operacional';
   document.getElementById('modal-casa').value = casa || 'MEET & EAT';
   document.getElementById('modal-usuario-title').textContent = id ? 'Editar Usuário' : 'Novo Usuário';
-  document.getElementById('modal-senha-hint').textContent = id ? '(deixe em branco para não alterar)' : '(obrigatória)';
   document.getElementById('modal-alert').style.display = 'none';
   document.getElementById('modal-usuario').style.display = 'flex';
 }
@@ -1411,27 +1429,20 @@ function fecharModalUsuario() {
 async function salvarUsuario() {
   const id = document.getElementById('modal-usuario-id').value;
   const nome = document.getElementById('modal-nome').value.trim();
-  const email = document.getElementById('modal-email').value.trim();
-  const senhaRaw = document.getElementById('modal-senha').value;
   const perfil = document.getElementById('modal-perfil').value;
   const casa = document.getElementById('modal-casa').value;
 
-  if (!nome || !email) { showModalAlert('Preencha nome e email.', 'error'); return; }
-  if (!id && !senhaRaw) { showModalAlert('Informe uma senha para o novo usuário.', 'error'); return; }
-
+  if (!nome) { showModalAlert('Preencha o nome.', 'error'); return; }
   showModalAlert('Salvando...', 'success');
 
   let result;
   if (id) {
-    if (senhaRaw) {
-      const hash = await sha256(senhaRaw);
-      result = await dbQuery("UPDATE usuarios SET nome=$1, email=$2, senha=$3, perfil=$4, casa=$5 WHERE id=$6", [nome, email, hash, perfil, casa, id]);
-    } else {
-      result = await dbQuery("UPDATE usuarios SET nome=$1, email=$2, perfil=$3, casa=$4 WHERE id=$5", [nome, email, perfil, casa, id]);
-    }
+    const q = new SBQuery('usuarios');
+    q.eq('id', id);
+    result = await q.update({ nome, perfil, casa });
   } else {
-    const hash = await sha256(senhaRaw);
-    result = await dbQuery("INSERT INTO usuarios (nome, email, senha, perfil, casa) VALUES ($1,$2,$3,$4,$5)", [nome, email, hash, perfil, casa]);
+    const q = new SBQuery('usuarios');
+    result = await q.insert({ nome, perfil, casa });
   }
 
   if (result.error) { showModalAlert('Erro: ' + result.error, 'error'); return; }
@@ -1440,9 +1451,11 @@ async function salvarUsuario() {
 }
 
 async function excluirUsuario(id, nome) {
-  if (!confirm(`Excluir o usuário "${nome}"? Esta ação não pode ser desfeita.`)) return;
-  const result = await dbQuery("DELETE FROM usuarios WHERE id=$1", [id]);
-  if (result.error) { alert('Erro ao excluir: ' + result.error); return; }
+  if (!confirm(`Excluir o usuário "${nome}"?`)) return;
+  const q = new SBQuery('usuarios');
+  q.eq('id', id);
+  const { error } = await q.delete();
+  if (error) { alert('Erro ao excluir: ' + error); return; }
   loadUsuarios();
 }
 
@@ -1454,29 +1467,10 @@ function showModalAlert(msg, type) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// TROCA DE SENHA
+// TROCA DE SENHA — removida (sistema sem senha)
 // ══════════════════════════════════════════════════════════════════════
-async function trocarSenha() {
-  const atual = document.getElementById('senha-atual').value;
-  const nova = document.getElementById('senha-nova').value;
-  const confirma = document.getElementById('senha-confirma').value;
-
-  if (!atual || !nova || !confirma) { showSenhaAlert('Preencha todos os campos.', 'error'); return; }
-  if (nova !== confirma) { showSenhaAlert('A nova senha e a confirmação não coincidem.', 'error'); return; }
-  if (nova.length < 6) { showSenhaAlert('A nova senha deve ter pelo menos 6 caracteres.', 'error'); return; }
-
-  const hashAtual = await sha256(atual);
-  const check = await dbQuery("SELECT id FROM usuarios WHERE id=$1 AND senha=$2", [currentUser.id, hashAtual]);
-  if (!check.rows || check.rows.length === 0) { showSenhaAlert('Senha atual incorreta.', 'error'); return; }
-
-  const hashNova = await sha256(nova);
-  const result = await dbQuery("UPDATE usuarios SET senha=$1 WHERE id=$2", [hashNova, currentUser.id]);
-  if (result.error) { showSenhaAlert('Erro ao alterar senha.', 'error'); return; }
-
-  showSenhaAlert('Senha alterada com sucesso!', 'success');
-  document.getElementById('senha-atual').value = '';
-  document.getElementById('senha-nova').value = '';
-  document.getElementById('senha-confirma').value = '';
+function trocarSenha() {
+  showSenhaAlert('Sistema sem senha — login por nome.', 'success');
 }
 
 function showSenhaAlert(msg, type) {
