@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -234,16 +235,18 @@
       <div class="brand">GRUPO HOS</div>
       <div class="sub">Gestão de Eventos</div>
     </div>
-    <div id="login-alert" style="display:none"></div>
     <div class="field">
-      <label>Email</label>
-      <input type="email" id="login-email" placeholder="seu@email.com.br">
+      <label>Quem é você?</label>
+      <div id="user-buttons" style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+        <button class="btn btn-ghost btn-full" onclick="entrarComo('Henrique', 'admin')">Henrique</button>
+        <button class="btn btn-ghost btn-full" onclick="entrarComo('Alexandre', 'operacional')">Alexandre</button>
+        <button class="btn btn-ghost btn-full" onclick="entrarComo('Jailson', 'operacional')">Jailson</button>
+        <button class="btn btn-ghost btn-full" onclick="entrarComo('Karine', 'operacional')">Karine</button>
+        <button class="btn btn-ghost btn-full" onclick="entrarComo('Victoria', 'operacional')">Victoria</button>
+        <button class="btn btn-ghost btn-full" onclick="entrarComo('Arthur', 'operacional')">Arthur</button>
+        <button class="btn btn-ghost btn-full" onclick="entrarComo('Convidado', 'operacional')">Convidado</button>
+      </div>
     </div>
-    <div class="field">
-      <label>Senha</label>
-      <input type="password" id="login-senha" placeholder="••••••••">
-    </div>
-    <button class="btn btn-gold btn-full" style="margin-top:8px" onclick="doLogin()">Entrar</button>
   </div>
 </div>
 
@@ -847,31 +850,15 @@ IMPORTANT: Return ONLY the JSON, no explanation, no markdown.`;
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// AUTH
+// AUTH — sem senha, só escolhe o nome
 // ══════════════════════════════════════════════════════════════════════
-async function doLogin() {
-  const email = document.getElementById('login-email').value.trim();
-  const senha = document.getElementById('login-senha').value;
-  if (!email || !senha) return showLoginAlert("Preencha email e senha.", "error");
+function entrarComo(nome, perfil) {
+  currentUser = { nome, perfil, id: null };
+  document.getElementById('user-name-display').textContent = nome;
+  document.getElementById('user-role-display').textContent = perfil;
+  document.getElementById('user-avatar').textContent = nome.slice(0,2).toUpperCase();
 
-  const hash = await sha256(senha);
-  showLoginAlert("Verificando...", "info");
-
-  const result = await dbQuery(
-    "SELECT id, nome, email, perfil FROM usuarios WHERE email = $1 AND senha = $2",
-    [email, hash]
-  );
-
-  if (result.error) return showLoginAlert("Erro de conexão. Verifique o banco.", "error");
-  if (!result.rows || result.rows.length === 0) return showLoginAlert("Email ou senha incorretos.", "error");
-
-  currentUser = result.rows[0];
-  document.getElementById('user-name-display').textContent = currentUser.nome;
-  document.getElementById('user-role-display').textContent = currentUser.perfil;
-  document.getElementById('user-avatar').textContent = currentUser.nome.slice(0,2).toUpperCase();
-
-  // Mostrar menu Usuários só para admin
-  if (currentUser.perfil === 'admin') {
+  if (perfil === 'admin') {
     document.getElementById('nav-usuarios').style.display = 'flex';
   }
 
@@ -887,10 +874,7 @@ function doLogout() {
 }
 
 function showLoginAlert(msg, type) {
-  const el = document.getElementById('login-alert');
-  el.style.display = 'block';
-  el.className = 'alert alert-' + (type === 'error' ? 'error' : 'success');
-  el.textContent = msg;
+  // mantido por compatibilidade
 }
 
 async function sha256(message) {
@@ -1501,9 +1485,6 @@ function showSenhaAlert(msg, type) {
   el.className = 'alert alert-' + type;
   el.textContent = msg;
 }
-
-// Enter no login
-document.getElementById('login-senha').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 
 // Fechar modal clicando fora
 document.getElementById('modal-usuario').addEventListener('click', function(e) { if (e.target === this) fecharModalUsuario(); });
