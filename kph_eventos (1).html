@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grupo HOS — O.S. Sistema</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --border: #2a2a2a;
+    --border-light: #333;
+    --gold: #c9a84c;
+    --gold-light: #e2c47a;
+    --gold-dim: rgba(201,168,76,0.15);
+    --text: #f0ece4;
+    --text-muted: #888;
+    --text-dim: #555;
+    --red: #e05555;
+    --green: #4caf7d;
+    --radius: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+
+  /* ── LOGIN ── */
+  #screen-login {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 60%), var(--bg);
+  }
+  .login-box {
+    width: 380px; padding: 48px 40px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .login-logo { text-align: center; margin-bottom: 36px; }
+  .login-logo .brand { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--gold); letter-spacing: 2px; }
+  .login-logo .sub { font-size: 11px; color: var(--text-muted); letter-spacing: 3px; text-transform: uppercase; margin-top: 4px; }
+
+  /* ── FORMS ── */
+  .field { margin-bottom: 18px; }
+  .field label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 7px; }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 10px 14px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px;
+    transition: border-color .2s;
+    outline: none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--gold); }
+  .field textarea { resize: vertical; min-height: 80px; }
+  .field select { appearance: none; cursor: pointer; }
+  .field-row { display: grid; gap: 14px; }
+  .field-row.col2 { grid-template-columns: 1fr 1fr; }
+  .field-row.col3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: none; transition: all .2s; text-decoration: none;
+    letter-spacing: .3px;
+  }
+  .btn-gold { background: var(--gold); color: #0a0a0a; }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-outline { background: transparent; color: var(--gold); border: 1px solid var(--gold); }
+  .btn-outline:hover { background: var(--gold-dim); }
+  .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--border-light); color: var(--text); }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
+  .btn-danger:hover { background: rgba(224,85,85,0.1); }
+  .btn-full { width: 100%; justify-content: center; }
+  .btn-sm { padding: 7px 14px; font-size: 12px; }
+
+  /* ── LAYOUT ── */
+  #screen-app { display: none; }
+  .app-shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
+  }
+  .sidebar-logo { padding: 28px 24px 20px; border-bottom: 1px solid var(--border); }
+  .sidebar-logo .brand { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--gold); }
+  .sidebar-logo .sub { font-size: 10px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+  .sidebar-nav { flex: 1; padding: 16px 12px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: var(--radius);
+    font-size: 13px; font-weight: 500; color: var(--text-muted);
+    cursor: pointer; transition: all .15s; margin-bottom: 2px;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--gold-dim); color: var(--gold); }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .sidebar-user { padding: 16px; border-top: 1px solid var(--border); }
+  .user-info { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .user-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--gold-dim); border: 1px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: var(--gold);
+  }
+  .user-name { font-size: 13px; font-weight: 600; }
+  .user-role { font-size: 11px; color: var(--text-muted); }
+
+  /* ── MAIN ── */
+  .main { padding: 32px 40px; overflow-y: auto; }
+  .page-header { margin-bottom: 28px; }
+  .page-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 600; }
+  .page-sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+  /* ── DASHBOARD ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 20px;
+  }
+  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; }
+  .stat-value { font-family: 'Playfair Display', serif; font-size: 32px; color: var(--gold); }
+  .stat-sub { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  /* ── TABLE ── */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .table-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .table-title { font-size: 14px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 10px 16px; text-align: left; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-dim); border-bottom: 1px solid var(--border); background: var(--surface2); }
+  td { padding: 13px 16px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; letter-spacing: .3px;
+  }
+  .badge-rascunho { background: rgba(136,136,136,0.15); color: var(--text-muted); }
+  .badge-confirmado { background: rgba(76,175,125,0.15); color: var(--green); }
+  .badge-cancelado { background: rgba(224,85,85,0.15); color: var(--red); }
+  .badge-realizado { background: rgba(201,168,76,0.15); color: var(--gold); }
+
+  /* ── OS FORM ── */
+  .os-form { max-width: 900px; }
+  .section-block {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; margin-bottom: 20px; overflow: hidden;
+  }
+  .section-head {
+    padding: 14px 20px; background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px; cursor: pointer;
+  }
+  .section-head .section-icon { font-size: 16px; }
+  .section-head .section-title { font-size: 13px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--text); flex: 1; }
+  .section-head .toggle-arrow { color: var(--text-dim); transition: transform .2s; font-size: 12px; }
+  .section-head.collapsed .toggle-arrow { transform: rotate(-90deg); }
+  .section-body { padding: 20px; }
+  .section-body.hidden { display: none; }
+
+  /* ── BRIGADA ── */
+  .brigada-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+  .brigada-table th { font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: var(--text-dim); padding: 6px 8px; text-align: left; }
+  .brigada-table td { padding: 5px 4px; }
+  .brigada-table input, .brigada-table select {
+    width: 100%; padding: 6px 8px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 4px;
+    color: var(--text); font-size: 12px; font-family: 'DM Sans', sans-serif;
+  }
+  .brigada-total { text-align: right; font-size: 13px; color: var(--text-muted); }
+  .brigada-total span { color: var(--gold); font-weight: 700; font-size: 16px; }
+
+  /* ── MENU ROWS ── */
+  .menu-row {
+    display: grid; grid-template-columns: 160px 90px 90px 1fr 180px auto;
+    gap: 8px; align-items: start; margin-bottom: 8px;
+  }
+  .menu-row input, .menu-row select, .menu-row textarea {
+    padding: 7px 10px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 4px;
+    color: var(--text); font-size: 12px; font-family: 'DM Sans', sans-serif;
+  }
+  .menu-row textarea { resize: vertical; min-height: 34px; }
+
+  /* ── ALERTS / MESSAGES ── */
+  .alert { padding: 12px 16px; border-radius: var(--radius); font-size: 13px; margin-bottom: 16px; }
+  .alert-error { background: rgba(224,85,85,0.1); border: 1px solid rgba(224,85,85,0.3); color: var(--red); }
+  .alert-success { background: rgba(76,175,125,0.1); border: 1px solid rgba(76,175,125,0.3); color: var(--green); }
+
+  /* ── LOADING ── */
+  .loading { display: flex; align-items: center; justify-content: center; padding: 60px; color: var(--text-muted); font-size: 14px; gap: 10px; }
+  .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin .6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+  .empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: .4; }
+  .empty-state p { font-size: 14px; }
+
+  /* ── VIEW OS ── */
+  .os-view { max-width: 900px; }
+  .os-view-header { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin-bottom: 20px; }
+  .os-view-title { font-family: 'Playfair Display', serif; font-size: 26px; margin-bottom: 8px; }
+  .os-meta { display: flex; gap: 24px; flex-wrap: wrap; }
+  .os-meta-item { font-size: 13px; color: var(--text-muted); }
+  .os-meta-item strong { color: var(--text); }
+  .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+  .info-item label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); display: block; margin-bottom: 3px; }
+  .info-item span { font-size: 13px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .app-shell { grid-template-columns: 1fr; }
+    .sidebar { position: fixed; z-index: 100; transform: translateX(-100%); }
+    .main { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════ LOGIN ══════════════════════════════════════ -->
+<div id="screen-login">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="brand">GRUPO HOS</div>
+      <div class="sub">Gestão de Eventos</div>
+    </div>
+    <div id="login-alert" style="display:none"></div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="seu@email.com.br">
+    </div>
+    <div class="field">
+      <label>Senha</label>
+      <input type="password" id="login-senha" placeholder="••••••••">
+    </div>
+    <button class="btn btn-gold btn-full" style="margin-top:8px" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ APP ══════════════════════════════════════ -->
+<div id="screen-app">
+  <div class="app-shell">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="brand">HOS</div>
+        <div class="sub">Grupo · Eventos</div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-item active" id="nav-dashboard" onclick="showPage('dashboard')">
+          <span class="nav-icon">◈</span> Dashboard
+        </div>
+        <div class="nav-item" id="nav-eventos" onclick="showPage('eventos')">
+          <span class="nav-icon">☰</span> Eventos
+        </div>
+        <div class="nav-item" id="nav-nova-os" onclick="showPage('nova-os')">
+          <span class="nav-icon">＋</span> Nova O.S.
+        </div>
+        <div class="nav-item" id="nav-usuarios" onclick="showPage('usuarios')" style="display:none">
+          <span class="nav-icon">👤</span> Usuários
+        </div>
+        <div class="nav-item" id="nav-senha" onclick="showPage('senha')">
+          <span class="nav-icon">🔑</span> Minha Senha
+        </div>
+      </nav>
+      <div class="sidebar-user">
+        <div class="user-info">
+          <div class="user-avatar" id="user-avatar">IK</div>
+          <div>
+            <div class="user-name" id="user-name-display">Ike</div>
+            <div class="user-role" id="user-role-display">Admin</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-full btn-sm" onclick="doLogout()">Sair</button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <!-- DASHBOARD -->
+      <div id="page-dashboard" style="display:none">
+        <div class="page-header">
+          <div class="page-title">Dashboard</div>
+          <div class="page-sub">Visão geral dos eventos Grupo HOS</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total de Eventos</div>
+            <div class="stat-value" id="stat-total">—</div>
+            <div class="stat-sub">cadastrados</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Confirmados</div>
+            <div class="stat-value" id="stat-confirmados">—</div>
+            <div class="stat-sub">próximos</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Rascunhos</div>
+            <div class="stat-value" id="stat-rascunhos">—</div>
+            <div class="stat-sub">em aberto</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Realizados</div>
+            <div class="stat-value" id="stat-realizados">—</div>
+            <div class="stat-sub">este ano</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-title">Próximos Eventos</div>
+            <button class="btn btn-gold btn-sm" onclick="showPage('nova-os')">＋ Nova O.S.</button>
+          </div>
+          <div id="dashboard-table-body"></div>
+        </div>
+      </div>
+
+      <!-- LISTA EVENTOS -->
+      <div id="page-eventos" style="display:none">
+        <div class="page-header" style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div class="page-title">Eventos</div>
+            <div class="page-sub">Todas as ordens de serviço</div>
+          </div>
+          <button class="btn btn-gold" onclick="showPage('nova-os')">＋ Nova O.S.</button>
+        </div>
+        <!-- FILTROS -->
+        <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+          <select id="filtro-casa" onchange="aplicarFiltros()" style="padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
+            <option value="">Todas as casas</option>
+            <option>MEET & EAT</option>
+            <option>Madonna Cucina</option>
+            <option>Match Point</option>
+          </select>
+          <select id="filtro-status" onchange="aplicarFiltros()" style="padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
+            <option value="">Todos os status</option>
+            <option value="rascunho">Rascunho</option>
+            <option value="confirmado">Confirmado</option>
+            <option value="realizado">Realizado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+          <input type="text" id="filtro-busca" placeholder="Buscar por nome..." oninput="aplicarFiltros()" style="padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;min-width:200px">
+        </div>
+        <div class="table-wrap">
+          <div id="eventos-table-body"></div>
+        </div>
+      </div>
+
+      <!-- PÁGINA USUÁRIOS (só admin) -->
+      <div id="page-usuarios" style="display:none">
+        <div class="page-header" style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div class="page-title">Usuários</div>
+            <div class="page-sub">Gerencie os acessos do sistema</div>
+          </div>
+          <button class="btn btn-gold" onclick="abrirModalUsuario()">＋ Novo Usuário</button>
+        </div>
+        <div class="table-wrap">
+          <div id="usuarios-table-body"><div class="loading"><div class="spinner"></div> Carregando...</div></div>
+        </div>
+      </div>
+
+      <!-- PÁGINA MINHA SENHA -->
+      <div id="page-senha" style="display:none">
+        <div class="page-header">
+          <div class="page-title">Minha Senha</div>
+          <div class="page-sub">Altere sua senha de acesso</div>
+        </div>
+        <div style="max-width:420px">
+          <div class="section-block">
+            <div class="section-body">
+              <div id="senha-alert" style="display:none;margin-bottom:16px"></div>
+              <div class="field">
+                <label>Senha Atual</label>
+                <input type="password" id="senha-atual" placeholder="••••••••">
+              </div>
+              <div class="field">
+                <label>Nova Senha</label>
+                <input type="password" id="senha-nova" placeholder="••••••••">
+              </div>
+              <div class="field">
+                <label>Confirmar Nova Senha</label>
+                <input type="password" id="senha-confirma" placeholder="••••••••">
+              </div>
+              <button class="btn btn-gold btn-full" onclick="trocarSenha()">Alterar Senha</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL NOVO/EDITAR USUÁRIO -->
+      <div id="modal-usuario" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;width:420px;max-width:95vw">
+          <div style="font-family:'Playfair Display',serif;font-size:20px;margin-bottom:24px" id="modal-usuario-title">Novo Usuário</div>
+          <div id="modal-alert" style="display:none;margin-bottom:16px"></div>
+          <input type="hidden" id="modal-usuario-id">
+          <div class="field">
+            <label>Nome</label>
+            <input type="text" id="modal-nome" placeholder="Nome completo">
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="modal-email" placeholder="email@grupohol.com.br">
+          </div>
+          <div class="field">
+            <label>Senha <span id="modal-senha-hint" style="font-weight:400;color:var(--text-dim)">(obrigatória para novo usuário)</span></label>
+            <input type="password" id="modal-senha" placeholder="Deixe em branco para manter">
+          </div>
+          <div class="field">
+            <label>Perfil</label>
+            <select id="modal-perfil">
+              <option value="operacional">Operacional</option>
+              <option value="comercial">Comercial</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Casa Principal</label>
+            <select id="modal-casa">
+              <option>MEET & EAT</option>
+              <option>Madonna Cucina</option>
+              <option>Match Point</option>
+              <option>Todas</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:8px">
+            <button class="btn btn-ghost" style="flex:1" onclick="fecharModalUsuario()">Cancelar</button>
+            <button class="btn btn-gold" style="flex:1" onclick="salvarUsuario()">Salvar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOVA OS / EDITAR OS -->
+      <div id="page-nova-os" style="display:none">
+        <div class="page-header" style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div class="page-title" id="os-form-title">Nova Ordem de Serviço</div>
+            <div class="page-sub">Preencha todos os campos operacionais</div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-ghost" onclick="showPage('eventos')">Cancelar</button>
+            <button class="btn btn-gold" onclick="salvarOS()">Salvar O.S.</button>
+          </div>
+        </div>
+        <div id="os-alert" style="display:none"></div>
+        <input type="hidden" id="os-id">
+
+        <div class="os-form">
+
+          <!-- CABEÇALHO -->
+          <div class="section-block">
+            <div class="section-head" onclick="toggleSection(this)">
+              <span class="section-icon">📋</span>
+              <span class="section-title">Dados do Evento</span>
+              <span class="toggle-arrow">▼</span>
+            </div>
+            <div class="section-body">
+              <div class="field-row col2" style="margin-bottom:14px">
+                <div class="field">
+                  <label>Casa</label>
+                  <select id="f-casa">
+                    <option>MEET & EAT</option>
+                    <option>Madonna Cucina</option>
+                    <option>Match Point</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Tipo de Evento</label>
+                  <select id="f-tipo">
+                    <option>Corporativo</option>
+                    <option>Confraternização</option>
+                    <option>Festa Aniversário</option>
+                    <option>Jantar</option>
+                    <option>Almoço</option>
+                    <option>Café da Manhã</option>
+                    <option>Fotografia</option>
+                    <option>Palestra</option>
+                    <option>Outro</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field-row col2" style="margin-bottom:14px">
+                <div class="field">
+                  <label>Nome do Evento / Cliente</label>
+                  <input type="text" id="f-nome" placeholder="Ex: Patria Investimentos">
+                </div>
+                <div class="field">
+                  <label>Tema do Evento</label>
+                  <input type="text" id="f-tema" placeholder="Ex: Comemoração de executivos">
+                </div>
+              </div>
+              <div class="field-row col3" style="margin-bottom:14px">
+                <div class="field">
+                  <label>Data do Evento</label>
+                  <input type="date" id="f-data-inicio">
+                </div>
+                <div class="field">
+                  <label>Hora Início</label>
+                  <input type="time" id="f-hora-inicio">
+                </div>
+                <div class="field">
+                  <label>Hora Término</label>
+                  <input type="time" id="f-hora-termino">
+                </div>
+              </div>
+              <div class="field-row col3" style="margin-bottom:14px">
+                <div class="field">
+                  <label>Nº de Convidados</label>
+                  <input type="number" id="f-pax" placeholder="110">
+                </div>
+                <div class="field">
+                  <label>Contato / Telefone</label>
+                  <input type="text" id="f-contato" placeholder="Nome (11) 99999-9999">
+                </div>
+                <div class="field">
+                  <label>Situação do Pagamento</label>
+                  <select id="f-pagamento">
+                    <option>Via Financeiro Adm</option>
+                    <option>Pago</option>
+                    <option>Parcialmente Pago</option>
+                    <option>Pendente</option>
+                    <option>Sinal Pago</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field-row col2" style="margin-bottom:14px">
+                <div class="field">
+                  <label>Responsável Comercial</label>
+                  <input type="text" id="f-comercial" placeholder="Ex: Ike">
+                </div>
+                <div class="field">
+                  <label>Responsável Operacional</label>
+                  <input type="text" id="f-operacional" placeholder="Ex: Alexandre e Jailson">
+                </div>
+              </div>
+              <div class="field">
+                <label>Status</label>
+                <select id="f-status">
+                  <option value="rascunho">Rascunho</option>
+                  <option value="confirmado">Confirmado</option>
+                  <option value="realizado">Realizado</option>
+                  <option value="cancelado">Cancelado</option>
+                </select>
+              </div>
+              <div class="field" style="margin-top:14px">
+                <label>Briefing do Cliente</label>
+                <textarea id="f-briefing" rows="3" placeholder="Descreva o perfil e contexto do cliente..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- INFRAESTRUTURA -->
+          <div class="section-block">
+            <div class="section-head" onclick="toggleSection(this)">
+              <span class="section-icon">🏛️</span>
+              <span class="section-title">Infraestrutura</span>
+              <span class="toggle-arrow">▼</span>
+            </div>
+            <div class="section-body">
+              <div class="field-row col2" style="margin-bottom:14px">
+                <div class="field">
+                  <label>Espaços Utilizados</label>
+                  <textarea id="f-espacos" rows="2" placeholder="Ex: MEET - Rooftop&#10;MEET - Bar Secreto"></textarea>
+                </div>
+                <div class="field">
+                  <label>Acesso de Entrada</label>
+                  <select id="f-acesso">
+                    <option>Hall Principal</option>
+                    <option>Entrada de Serviço</option>
+                    <option>Acesso Direto</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field" style="margin-bottom:14px">
+                <label>Observações de Acesso</label>
+                <textarea id="f-acesso-obs" rows="2" placeholder="Ex: 2 hostess, pulseiras, check-in..."></textarea>
+              </div>
+              <div class="field-row col2" style="margin-bottom:14px">
+                <div class="field">
+                  <label>Mobiliário</label>
+                  <select id="f-mobiliario">
+                    <option>Casa</option>
+                    <option>Locação</option>
+                    <option>Misto</option>
+                    <option>N/A</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Obs. Mobiliário</label>
+                  <input type="text" id="f-mobiliario-obs" placeholder="Ex: 12 Puffs + 4 Bistrô (locação)">
+                </div>
+              </div>
+              <div class="field-row col2" style="margin-bottom:14px">
+                <div class="field">
+                  <label>Fotografia / Vídeo</label>
+                  <select id="f-fotografia">
+                    <option>Autorizado</option>
+                    <option>Em Aprovação</option>
+                    <option>Não Autorizado</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Valet</label>
+                  <select id="f-valet">
+                    <option>Contratado pelo Cliente</option>
+                    <option>Contratado Casa</option>
+                    <option>Não Contratado</option>
+                    <option>Cliente paga por carro</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field-row col3" style="margin-bottom:14px">
+                <div class="field">
+                  <label>Artístico</label>
+                  <select id="f-artistico">
+                    <option>Não haverá</option>
+                    <option>Cliente</option>
+                    <option>Contratado Casa</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Gerador</label>
+                  <select id="f-gerador">
+                    <option>Contrado Casa</option>
+                    <option>Contrato Cliente</option>
+                    <option>Não Contratado</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Ambulância</label>
+                  <select id="f-ambulancia">
+                    <option>Não Contratado</option>
+                    <option>Contratado Cliente</option>
+                    <option>UTI</option>
+                    <option>Remoção</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field-row col2" style="margin-bottom:14px">
+                <div class="field">
+                  <label>Clientes Menores?</label>
+                  <select id="f-menores">
+                    <option>Não</option>
+                    <option>Sim</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Montagem necessária?</label>
+                  <select id="f-montagem">
+                    <option>Sim</option>
+                    <option>Não</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label>Descrição da Montagem / Layout</label>
+                <textarea id="f-montagem-desc" rows="3" placeholder="Descreva o layout, disposição de móveis, espaços..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- BRIGADA -->
+          <div class="section-block">
+            <div class="section-head" onclick="toggleSection(this)">
+              <span class="section-icon">👥</span>
+              <span class="section-title">Brigada</span>
+              <span class="toggle-arrow">▼</span>
+            </div>
+            <div class="section-body">
+              <table class="brigada-table">
+                <thead>
+                  <tr>
+                    <th style="width:200px">Função</th>
+                    <th style="width:60px">Qtd</th>
+                    <th style="width:100px">Valor Unit. (R$)</th>
+                    <th>Observações</th>
+                    <th style="width:40px"></th>
+                  </tr>
+                </thead>
+                <tbody id="brigada-body"></tbody>
+              </table>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+                <button class="btn btn-ghost btn-sm" onclick="addBrigadaRow()">＋ Adicionar função</button>
+                <div class="brigada-total">Total Brigada: <span id="brigada-total">R$ 0,00</span> <span style="font-size:11px;color:var(--text-dim)">(+ 15% taxa)</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MENU BAR -->
+          <div class="section-block">
+            <div class="section-head" onclick="toggleSection(this)">
+              <span class="section-icon">🍸</span>
+              <span class="section-title">Menu Bar</span>
+              <span class="toggle-arrow">▼</span>
+            </div>
+            <div class="section-body">
+              <div style="display:grid;grid-template-columns:160px 90px 90px 1fr 180px 40px;gap:8px;margin-bottom:8px">
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);padding:0 2px">Serviço</div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)">Hr Início</div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)">Hr Fim</div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)">Descritivo</div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)">Observações</div>
+                <div></div>
+              </div>
+              <div id="menu-bar-body"></div>
+              <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addMenuBarRow()">＋ Adicionar linha</button>
+              <div class="field" style="margin-top:16px">
+                <label>Informações gerais sobre o serviço de bar</label>
+                <textarea id="f-bar-info" rows="3" placeholder="Open bar, serviço volante, protocolos especiais..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- MENU COZINHA -->
+          <div class="section-block">
+            <div class="section-head" onclick="toggleSection(this)">
+              <span class="section-icon">🍽️</span>
+              <span class="section-title">Menu Cozinha</span>
+              <span class="toggle-arrow">▼</span>
+            </div>
+            <div class="section-body">
+              <div style="display:grid;grid-template-columns:160px 90px 90px 1fr 180px 40px;gap:8px;margin-bottom:8px">
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);padding:0 2px">Serviço</div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)">Hr Início</div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)">Hr Fim</div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)">Descritivo</div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)">Observações</div>
+                <div></div>
+              </div>
+              <div id="menu-cozinha-body"></div>
+              <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addMenuCozinhaRow()">＋ Adicionar linha</button>
+              <div class="field" style="margin-top:16px">
+                <label>Informações gerais sobre o serviço de comida</label>
+                <textarea id="f-cozinha-info" rows="3" placeholder="Atenção a montagem, qualidade, temperatura..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- CAMPO LIVRE -->
+          <div class="section-block">
+            <div class="section-head" onclick="toggleSection(this)">
+              <span class="section-icon">⚠️</span>
+              <span class="section-title">Alertas Operacionais</span>
+              <span class="toggle-arrow">▼</span>
+            </div>
+            <div class="section-body">
+              <div class="field">
+                <label>Campo Livre — Observações e Alertas</label>
+                <textarea id="f-campo-livre" rows="5" placeholder="Segurança, manutenção, logística, rádios, pontos de atenção..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:12px;justify-content:flex-end;padding-top:8px">
+            <button class="btn btn-ghost" onclick="showPage('eventos')">Cancelar</button>
+            <button class="btn btn-gold" onclick="salvarOS()">💾 Salvar Ordem de Serviço</button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- VIEW OS -->
+      <div id="page-view-os" style="display:none">
+        <div class="page-header" style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div class="page-title">Ordem de Serviço</div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-ghost" onclick="showPage('eventos')">← Voltar</button>
+            <button class="btn btn-outline" onclick="editarOS(currentViewId)">✏️ Editar</button>
+            <button class="btn btn-ghost" onclick="window.print()">🖨️ Imprimir</button>
+          </div>
+        </div>
+        <div id="view-os-content"></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════
+// CONFIG — substitua pela sua connection string do Neon via API proxy
+// Como HTML puro não pode conectar diretamente ao PostgreSQL,
+// usamos a Anthropic API como intermediário para executar queries
+// ══════════════════════════════════════════════════════════════════════
+
+const NEON_URL = "postgresql://neondb_owner:npg_A3ONYCJKVjw9@ep-rapid-moon-am0yk3yl-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
+const ANTHROPIC_KEY = "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";
+
+// Estado global
+let currentUser = null;
+let todosEventos = [];
+let currentViewId = null;
+let editingId = null;
+
+// ══════════════════════════════════════════════════════════════════════
+// DB via Anthropic API (Claude como proxy para Neon)
+// ══════════════════════════════════════════════════════════════════════
+async function dbQuery(sql, params = []) {
+  const prompt = `You are a PostgreSQL query executor proxy. 
+Connection string: ${NEON_URL}
+
+Execute this SQL and return ONLY a JSON object with structure:
+{"rows": [...], "rowCount": N, "error": null}
+
+If there's an error, return: {"rows": [], "rowCount": 0, "error": "error message"}
+
+SQL: ${sql}
+Parameters: ${JSON.stringify(params)}
+
+IMPORTANT: Return ONLY the JSON, no explanation, no markdown.`;
+
+  const resp = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": ANTHROPIC_KEY,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1000,
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+  const data = await resp.json();
+  const text = data.content.map(c => c.text || "").join("").trim();
+  try {
+    const clean = text.replace(/```json|```/g, "").trim();
+    return JSON.parse(clean);
+  } catch(e) {
+    return { rows: [], rowCount: 0, error: "Parse error: " + text };
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const senha = document.getElementById('login-senha').value;
+  if (!email || !senha) return showLoginAlert("Preencha email e senha.", "error");
+
+  const hash = await sha256(senha);
+  showLoginAlert("Verificando...", "info");
+
+  const result = await dbQuery(
+    "SELECT id, nome, email, perfil FROM usuarios WHERE email = $1 AND senha = $2",
+    [email, hash]
+  );
+
+  if (result.error) return showLoginAlert("Erro de conexão. Verifique o banco.", "error");
+  if (!result.rows || result.rows.length === 0) return showLoginAlert("Email ou senha incorretos.", "error");
+
+  currentUser = result.rows[0];
+  document.getElementById('user-name-display').textContent = currentUser.nome;
+  document.getElementById('user-role-display').textContent = currentUser.perfil;
+  document.getElementById('user-avatar').textContent = currentUser.nome.slice(0,2).toUpperCase();
+
+  // Mostrar menu Usuários só para admin
+  if (currentUser.perfil === 'admin') {
+    document.getElementById('nav-usuarios').style.display = 'flex';
+  }
+
+  document.getElementById('screen-login').style.display = 'none';
+  document.getElementById('screen-app').style.display = 'block';
+  showPage('dashboard');
+}
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('screen-login').style.display = 'flex';
+  document.getElementById('screen-app').style.display = 'none';
+}
+
+function showLoginAlert(msg, type) {
+  const el = document.getElementById('login-alert');
+  el.style.display = 'block';
+  el.className = 'alert alert-' + (type === 'error' ? 'error' : 'success');
+  el.textContent = msg;
+}
+
+async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// NAVEGAÇÃO
+// ══════════════════════════════════════════════════════════════════════
+function showPage(page) {
+  ['dashboard','eventos','nova-os','view-os','usuarios','senha'].forEach(p => {
+    const el = document.getElementById('page-' + p);
+    if (el) el.style.display = 'none';
+  });
+  ['nav-dashboard','nav-eventos','nav-nova-os','nav-usuarios','nav-senha'].forEach(n => {
+    const el = document.getElementById(n);
+    if (el) el.classList.remove('active');
+  });
+
+  document.getElementById('page-' + page).style.display = 'block';
+
+  if (page === 'dashboard') { document.getElementById('nav-dashboard').classList.add('active'); loadDashboard(); }
+  if (page === 'eventos') { document.getElementById('nav-eventos').classList.add('active'); loadEventos(); }
+  if (page === 'nova-os') {
+    document.getElementById('nav-nova-os').classList.add('active');
+    if (!editingId) resetForm();
+  }
+  if (page === 'usuarios') { document.getElementById('nav-usuarios').classList.add('active'); loadUsuarios(); }
+  if (page === 'senha') { document.getElementById('nav-senha').classList.add('active'); }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════════════════
+async function loadDashboard() {
+  const result = await dbQuery("SELECT * FROM eventos ORDER BY data_inicio DESC LIMIT 50");
+  if (result.error) { document.getElementById('dashboard-table-body').innerHTML = `<div class="loading">Erro: ${result.error}</div>`; return; }
+
+  todosEventos = result.rows || [];
+  const total = todosEventos.length;
+  const confirmados = todosEventos.filter(e => e.status === 'confirmado').length;
+  const rascunhos = todosEventos.filter(e => e.status === 'rascunho').length;
+  const realizados = todosEventos.filter(e => e.status === 'realizado').length;
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-confirmados').textContent = confirmados;
+  document.getElementById('stat-rascunhos').textContent = rascunhos;
+  document.getElementById('stat-realizados').textContent = realizados;
+
+  renderEventosTable('dashboard-table-body', todosEventos.slice(0, 8));
+}
+
+async function loadEventos() {
+  document.getElementById('eventos-table-body').innerHTML = '<div class="loading"><div class="spinner"></div> Carregando eventos...</div>';
+  const result = await dbQuery(`
+    SELECT e.*, u.nome as criado_por_nome 
+    FROM eventos e 
+    LEFT JOIN usuarios u ON e.criado_por = u.id 
+    ORDER BY e.data_inicio DESC
+  `);
+  if (result.error) { document.getElementById('eventos-table-body').innerHTML = `<div class="loading">Erro: ${result.error}</div>`; return; }
+  todosEventos = result.rows || [];
+  aplicarFiltros();
+}
+
+function aplicarFiltros() {
+  const casa = document.getElementById('filtro-casa')?.value || '';
+  const status = document.getElementById('filtro-status')?.value || '';
+  const busca = (document.getElementById('filtro-busca')?.value || '').toLowerCase();
+
+  let filtrados = todosEventos.filter(e => {
+    if (casa && e.casa !== casa) return false;
+    if (status && e.status !== status) return false;
+    if (busca && !(e.nome_evento||'').toLowerCase().includes(busca)) return false;
+    return true;
+  });
+  renderEventosTable('eventos-table-body', filtrados);
+}
+
+function renderEventosTable(containerId, eventos) {
+  const container = document.getElementById(containerId);
+  if (!eventos || eventos.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>Nenhum evento encontrado.</p></div>';
+    return;
+  }
+  container.innerHTML = `<table>
+    <thead><tr>
+      <th>Evento</th><th>Casa</th><th>Data</th><th>Pax</th><th>Responsável Op.</th><th>Criado por</th><th>Status</th><th>Ações</th>
+    </tr></thead>
+    <tbody>${eventos.map(e => `
+      <tr>
+        <td><strong>${e.nome_evento || '—'}</strong><br><span style="font-size:11px;color:var(--text-muted)">${e.tipo_evento || ''}</span></td>
+        <td>${e.casa || '—'}</td>
+        <td>${e.data_inicio ? new Date(e.data_inicio).toLocaleDateString('pt-BR') : '—'}</td>
+        <td>${e.num_convidados || '—'}</td>
+        <td>${e.responsavel_operacional || '—'}</td>
+        <td><span style="font-size:12px;color:var(--text-muted)">${e.criado_por_nome || '—'}</span></td>
+        <td><span class="badge badge-${e.status || 'rascunho'}">${e.status || 'rascunho'}</span></td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-ghost btn-sm" onclick="verOS(${e.id})">Ver</button>
+          <button class="btn btn-outline btn-sm" onclick="editarOS(${e.id})">Editar</button>
+        </td>
+      </tr>
+    `).join('')}</tbody>
+  </table>`;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// FORM — Brigada
+// ══════════════════════════════════════════════════════════════════════
+const BRIGADA_PADRÃO = [
+  { funcao: 'Maître', qtd: 1, valor: 150, obs: '' },
+  { funcao: 'Chefe de Fila', qtd: 1, valor: 150, obs: '' },
+  { funcao: 'Garçon', qtd: 6, valor: 150, obs: '' },
+  { funcao: 'Cumin', qtd: 2, valor: 150, obs: '' },
+  { funcao: 'Limpeza', qtd: 2, valor: 150, obs: '' },
+  { funcao: 'Chefe de Bar', qtd: 1, valor: 200, obs: '' },
+  { funcao: 'Bartender', qtd: 3, valor: 180, obs: '' },
+  { funcao: 'Barback', qtd: 2, valor: 150, obs: '' },
+  { funcao: 'Chef de Cozinha', qtd: 1, valor: 250, obs: '' },
+  { funcao: 'Segurança', qtd: 1, valor: 220, obs: '' },
+];
+
+function addBrigadaRow(data = {}) {
+  const tbody = document.getElementById('brigada-body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" class="b-funcao" placeholder="Função" value="${data.funcao||''}"></td>
+    <td><input type="number" class="b-qtd" min="0" value="${data.qtd||1}" onchange="calcBrigada()"></td>
+    <td><input type="number" class="b-valor" min="0" value="${data.valor||150}" onchange="calcBrigada()"></td>
+    <td><input type="text" class="b-obs" placeholder="Obs" value="${data.obs||''}"></td>
+    <td><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove();calcBrigada()">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calcBrigada();
+}
+
+function calcBrigada() {
+  const rows = document.querySelectorAll('#brigada-body tr');
+  let total = 0;
+  rows.forEach(r => {
+    const qtd = parseFloat(r.querySelector('.b-qtd').value) || 0;
+    const val = parseFloat(r.querySelector('.b-valor').value) || 0;
+    total += qtd * val;
+  });
+  const comTaxa = total * 1.15;
+  document.getElementById('brigada-total').textContent = 'R$ ' + comTaxa.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+function getBrigadaData() {
+  return Array.from(document.querySelectorAll('#brigada-body tr')).map(r => ({
+    funcao: r.querySelector('.b-funcao').value,
+    qtd: parseFloat(r.querySelector('.b-qtd').value) || 0,
+    valor: parseFloat(r.querySelector('.b-valor').value) || 0,
+    obs: r.querySelector('.b-obs').value,
+  }));
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// FORM — Menu Bar / Cozinha
+// ══════════════════════════════════════════════════════════════════════
+function addMenuBarRow(data = {}) {
+  addMenuRow('menu-bar-body', data, [
+    'Não Alcóolicas','Alcóolicas','Vinhos e Champanhes','Open Bar','Pausa de Serviço','Encerramento de Serviço'
+  ]);
+}
+
+function addMenuCozinhaRow(data = {}) {
+  addMenuRow('menu-cozinha-body', data, [
+    'Entradas','Saladas','Principais','Sobremesas','Pausa de Serviço','Encerramento de Serviço'
+  ]);
+}
+
+function addMenuRow(containerId, data, opcoes) {
+  const container = document.getElementById(containerId);
+  const div = document.createElement('div');
+  div.className = 'menu-row';
+  div.innerHTML = `
+    <select style="padding:7px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-family:'DM Sans',sans-serif">
+      ${opcoes.map(o => `<option${data.servico===o?' selected':''}>${o}</option>`).join('')}
+    </select>
+    <input type="time" value="${data.hr_ini||''}" style="padding:7px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px">
+    <input type="time" value="${data.hr_fim||''}" style="padding:7px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px">
+    <textarea style="padding:7px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-family:'DM Sans',sans-serif;resize:vertical;min-height:34px" placeholder="Itens do menu...">${data.descritivo||''}</textarea>
+    <textarea style="padding:7px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-family:'DM Sans',sans-serif;resize:vertical;min-height:34px" placeholder="Observações...">${data.obs||''}</textarea>
+    <button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="align-self:flex-start;margin-top:2px">✕</button>
+  `;
+  container.appendChild(div);
+}
+
+function getMenuData(containerId) {
+  return Array.from(document.querySelectorAll('#' + containerId + ' .menu-row')).map(r => {
+    const inputs = r.querySelectorAll('select, input, textarea');
+    return { servico: inputs[0].value, hr_ini: inputs[1].value, hr_fim: inputs[2].value, descritivo: inputs[3].value, obs: inputs[4].value };
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// SALVAR / EDITAR
+// ══════════════════════════════════════════════════════════════════════
+async function salvarOS() {
+  const nome = document.getElementById('f-nome').value.trim();
+  if (!nome) { showOSAlert("Informe o nome do evento.", "error"); return; }
+
+  const brigada = getBrigadaData();
+  const menuBar = getMenuData('menu-bar-body');
+  const barInfo = document.getElementById('f-bar-info').value;
+  const menuCozinha = getMenuData('menu-cozinha-body');
+  const cozinhaInfo = document.getElementById('f-cozinha-info').value;
+
+  if (barInfo) menuBar.push({ servico: '_info', descritivo: barInfo });
+  if (cozinhaInfo) menuCozinha.push({ servico: '_info', descritivo: cozinhaInfo });
+
+  const dados = {
+    casa: document.getElementById('f-casa').value,
+    tipo_evento: document.getElementById('f-tipo').value,
+    nome_evento: nome,
+    tema: document.getElementById('f-tema').value,
+    data_inicio: document.getElementById('f-data-inicio').value || null,
+    hora_inicio: document.getElementById('f-hora-inicio').value || null,
+    hora_termino: document.getElementById('f-hora-termino').value || null,
+    num_convidados: parseInt(document.getElementById('f-pax').value) || null,
+    contato: document.getElementById('f-contato').value,
+    situacao_pagamento: document.getElementById('f-pagamento').value,
+    responsavel_comercial: document.getElementById('f-comercial').value,
+    responsavel_operacional: document.getElementById('f-operacional').value,
+    status: document.getElementById('f-status').value,
+    briefing_cliente: document.getElementById('f-briefing').value,
+    espacos: document.getElementById('f-espacos').value,
+    acesso_entrada: document.getElementById('f-acesso').value,
+    acesso_obs: document.getElementById('f-acesso-obs').value,
+    mobiliario: document.getElementById('f-mobiliario').value,
+    mobiliario_obs: document.getElementById('f-mobiliario-obs').value,
+    fotografia: document.getElementById('f-fotografia').value,
+    valet: document.getElementById('f-valet').value,
+    artistico: document.getElementById('f-artistico').value,
+    gerador: document.getElementById('f-gerador').value,
+    ambulancia: document.getElementById('f-ambulancia').value,
+    menores: document.getElementById('f-menores').value,
+    montagem: document.getElementById('f-montagem').value,
+    montagem_descricao: document.getElementById('f-montagem-desc').value,
+    brigada: JSON.stringify(brigada),
+    menu_bar: JSON.stringify(menuBar),
+    menu_cozinha: JSON.stringify(menuCozinha),
+    campo_livre: document.getElementById('f-campo-livre').value,
+    criado_por: currentUser.id,
+  };
+
+  showOSAlert("Salvando...", "success");
+
+  let sql, params;
+  if (editingId) {
+    const sets = Object.keys(dados).map((k, i) => `${k} = $${i+1}`).join(', ');
+    sql = `UPDATE eventos SET ${sets}, updated_at = NOW() WHERE id = $${Object.keys(dados).length+1}`;
+    params = [...Object.values(dados), editingId];
+  } else {
+    const cols = Object.keys(dados).join(', ');
+    const vals = Object.keys(dados).map((_, i) => `$${i+1}`).join(', ');
+    sql = `INSERT INTO eventos (${cols}) VALUES (${vals})`;
+    params = Object.values(dados);
+  }
+
+  const result = await dbQuery(sql, params);
+  if (result.error) { showOSAlert("Erro ao salvar: " + result.error, "error"); return; }
+
+  showOSAlert("Ordem de Serviço salva com sucesso!", "success");
+  editingId = null;
+  setTimeout(() => showPage('eventos'), 1200);
+}
+
+function showOSAlert(msg, type) {
+  const el = document.getElementById('os-alert');
+  el.style.display = 'block';
+  el.className = 'alert alert-' + type;
+  el.textContent = msg;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// VER / EDITAR
+// ══════════════════════════════════════════════════════════════════════
+async function verOS(id) {
+  currentViewId = id;
+  const result = await dbQuery("SELECT * FROM eventos WHERE id = $1", [id]);
+  if (!result.rows || result.rows.length === 0) return;
+  const e = result.rows[0];
+
+  const brigada = tryParse(e.brigada, []);
+  const menuBar = tryParse(e.menu_bar, []);
+  const menuCozinha = tryParse(e.menu_cozinha, []);
+  const barInfo = menuBar.find(r => r.servico === '_info');
+  const cozinhaInfo = menuCozinha.find(r => r.servico === '_info');
+
+  document.getElementById('view-os-content').innerHTML = `
+    <div class="os-view">
+      <div class="os-view-header">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+          <div class="os-view-title">${e.nome_evento || '—'}</div>
+          <span class="badge badge-${e.status}">${e.status}</span>
+        </div>
+        <div class="os-meta">
+          <div class="os-meta-item">Casa: <strong>${e.casa||'—'}</strong></div>
+          <div class="os-meta-item">Data: <strong>${e.data_inicio ? new Date(e.data_inicio).toLocaleDateString('pt-BR') : '—'}</strong></div>
+          <div class="os-meta-item">Horário: <strong>${e.hora_inicio||'—'} → ${e.hora_termino||'—'}</strong></div>
+          <div class="os-meta-item">Pax: <strong>${e.num_convidados||'—'}</strong></div>
+          <div class="os-meta-item">Tipo: <strong>${e.tipo_evento||'—'}</strong></div>
+        </div>
+      </div>
+
+      ${viewSection('📋 Dados Gerais', `
+        <div class="info-grid">
+          ${infoItem('Tema', e.tema)} ${infoItem('Contato', e.contato)}
+          ${infoItem('Pagamento', e.situacao_pagamento)} ${infoItem('Comercial', e.responsavel_comercial)}
+          ${infoItem('Operacional', e.responsavel_operacional)} ${infoItem('Espaços', e.espacos)}
+        </div>
+        ${e.briefing_cliente ? `<div style="margin-top:12px;padding:12px;background:var(--surface2);border-radius:6px;font-size:13px;color:var(--text-muted)">${e.briefing_cliente}</div>` : ''}
+      `)}
+
+      ${viewSection('🏛️ Infraestrutura', `
+        <div class="info-grid">
+          ${infoItem('Acesso', e.acesso_entrada)} ${infoItem('Obs Acesso', e.acesso_obs)}
+          ${infoItem('Mobiliário', e.mobiliario)} ${infoItem('Obs Mobiliário', e.mobiliario_obs)}
+          ${infoItem('Fotografia', e.fotografia)} ${infoItem('Valet', e.valet)}
+          ${infoItem('Artístico', e.artistico)} ${infoItem('Gerador', e.gerador)}
+          ${infoItem('Ambulância', e.ambulancia)} ${infoItem('Menores', e.menores)}
+          ${infoItem('Montagem', e.montagem)}
+        </div>
+        ${e.montagem_descricao ? `<div style="margin-top:12px;padding:12px;background:var(--surface2);border-radius:6px;font-size:13px">${e.montagem_descricao}</div>` : ''}
+      `)}
+
+      ${brigada.length ? viewSection('👥 Brigada', `
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr>
+            <th style="text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);border-bottom:1px solid var(--border)">Função</th>
+            <th style="text-align:center;padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);border-bottom:1px solid var(--border)">Qtd</th>
+            <th style="text-align:right;padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);border-bottom:1px solid var(--border)">Valor Unit.</th>
+            <th style="text-align:right;padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);border-bottom:1px solid var(--border)">Subtotal</th>
+            <th style="text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);border-bottom:1px solid var(--border)">Obs</th>
+          </tr></thead>
+          <tbody>
+            ${brigada.map(b => `<tr>
+              <td style="padding:7px 8px;border-bottom:1px solid var(--border)">${b.funcao}</td>
+              <td style="padding:7px 8px;border-bottom:1px solid var(--border);text-align:center">${b.qtd}</td>
+              <td style="padding:7px 8px;border-bottom:1px solid var(--border);text-align:right">R$ ${(b.valor||0).toFixed(2)}</td>
+              <td style="padding:7px 8px;border-bottom:1px solid var(--border);text-align:right">R$ ${((b.qtd||0)*(b.valor||0)).toFixed(2)}</td>
+              <td style="padding:7px 8px;border-bottom:1px solid var(--border);color:var(--text-muted);font-size:12px">${b.obs||''}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        <div style="text-align:right;margin-top:10px;font-size:13px;color:var(--text-muted)">
+          Total + 15% taxa: <strong style="color:var(--gold);font-size:15px">R$ ${(brigada.reduce((s,b)=>s+(b.qtd||0)*(b.valor||0),0)*1.15).toFixed(2)}</strong>
+        </div>
+      `) : ''}
+
+      ${menuBar.filter(r=>r.servico!=='_info').length ? viewSection('🍸 Menu Bar', menuTable(menuBar.filter(r=>r.servico!=='_info')) + (barInfo ? `<div style="margin-top:12px;padding:12px;background:var(--surface2);border-radius:6px;font-size:13px">${barInfo.descritivo}</div>` : '')) : ''}
+
+      ${menuCozinha.filter(r=>r.servico!=='_info').length ? viewSection('🍽️ Menu Cozinha', menuTable(menuCozinha.filter(r=>r.servico!=='_info')) + (cozinhaInfo ? `<div style="margin-top:12px;padding:12px;background:var(--surface2);border-radius:6px;font-size:13px">${cozinhaInfo.descritivo}</div>` : '')) : ''}
+
+      ${e.campo_livre ? viewSection('⚠️ Alertas Operacionais', `<div style="padding:12px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:6px;font-size:13px;white-space:pre-line">${e.campo_livre}</div>`) : ''}
+    </div>
+  `;
+  showPage('view-os');
+}
+
+function viewSection(title, content) {
+  return `<div class="section-block" style="margin-bottom:16px">
+    <div style="padding:12px 20px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase">${title}</div>
+    <div style="padding:16px 20px">${content}</div>
+  </div>`;
+}
+
+function infoItem(label, val) {
+  return `<div class="info-item"><label>${label}</label><span>${val||'—'}</span></div>`;
+}
+
+function menuTable(rows) {
+  return `<table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr>
+      ${['Serviço','Hr Início','Hr Fim','Descritivo','Obs'].map(h=>`<th style="text-align:left;padding:5px 8px;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);border-bottom:1px solid var(--border)">${h}</th>`).join('')}
+    </tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td style="padding:7px 8px;border-bottom:1px solid var(--border);font-weight:600">${r.servico||''}</td>
+      <td style="padding:7px 8px;border-bottom:1px solid var(--border)">${r.hr_ini||''}</td>
+      <td style="padding:7px 8px;border-bottom:1px solid var(--border)">${r.hr_fim||''}</td>
+      <td style="padding:7px 8px;border-bottom:1px solid var(--border);white-space:pre-line">${r.descritivo||''}</td>
+      <td style="padding:7px 8px;border-bottom:1px solid var(--border);color:var(--text-muted);white-space:pre-line">${r.obs||''}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+async function editarOS(id) {
+  editingId = id;
+  const result = await dbQuery("SELECT * FROM eventos WHERE id = $1", [id]);
+  if (!result.rows || result.rows.length === 0) return;
+  const e = result.rows[0];
+
+  document.getElementById('os-form-title').textContent = 'Editar O.S. — ' + (e.nome_evento || '');
+  document.getElementById('os-id').value = id;
+  document.getElementById('f-casa').value = e.casa || '';
+  document.getElementById('f-tipo').value = e.tipo_evento || '';
+  document.getElementById('f-nome').value = e.nome_evento || '';
+  document.getElementById('f-tema').value = e.tema || '';
+  document.getElementById('f-data-inicio').value = e.data_inicio ? e.data_inicio.split('T')[0] : '';
+  document.getElementById('f-hora-inicio').value = e.hora_inicio || '';
+  document.getElementById('f-hora-termino').value = e.hora_termino || '';
+  document.getElementById('f-pax').value = e.num_convidados || '';
+  document.getElementById('f-contato').value = e.contato || '';
+  document.getElementById('f-pagamento').value = e.situacao_pagamento || '';
+  document.getElementById('f-comercial').value = e.responsavel_comercial || '';
+  document.getElementById('f-operacional').value = e.responsavel_operacional || '';
+  document.getElementById('f-status').value = e.status || 'rascunho';
+  document.getElementById('f-briefing').value = e.briefing_cliente || '';
+  document.getElementById('f-espacos').value = e.espacos || '';
+  document.getElementById('f-acesso').value = e.acesso_entrada || '';
+  document.getElementById('f-acesso-obs').value = e.acesso_obs || '';
+  document.getElementById('f-mobiliario').value = e.mobiliario || '';
+  document.getElementById('f-mobiliario-obs').value = e.mobiliario_obs || '';
+  document.getElementById('f-fotografia').value = e.fotografia || '';
+  document.getElementById('f-valet').value = e.valet || '';
+  document.getElementById('f-artistico').value = e.artistico || '';
+  document.getElementById('f-gerador').value = e.gerador || '';
+  document.getElementById('f-ambulancia').value = e.ambulancia || '';
+  document.getElementById('f-menores').value = e.menores || '';
+  document.getElementById('f-montagem').value = e.montagem || '';
+  document.getElementById('f-montagem-desc').value = e.montagem_descricao || '';
+  document.getElementById('f-campo-livre').value = e.campo_livre || '';
+
+  // Brigada
+  document.getElementById('brigada-body').innerHTML = '';
+  const brigada = tryParse(e.brigada, []);
+  brigada.forEach(b => addBrigadaRow(b));
+
+  // Menu Bar
+  document.getElementById('menu-bar-body').innerHTML = '';
+  const menuBar = tryParse(e.menu_bar, []);
+  const barInfo = menuBar.find(r => r.servico === '_info');
+  menuBar.filter(r => r.servico !== '_info').forEach(r => addMenuBarRow(r));
+  document.getElementById('f-bar-info').value = barInfo ? barInfo.descritivo : '';
+
+  // Menu Cozinha
+  document.getElementById('menu-cozinha-body').innerHTML = '';
+  const menuCozinha = tryParse(e.menu_cozinha, []);
+  const cozinhaInfo = menuCozinha.find(r => r.servico === '_info');
+  menuCozinha.filter(r => r.servico !== '_info').forEach(r => addMenuCozinhaRow(r));
+  document.getElementById('f-cozinha-info').value = cozinhaInfo ? cozinhaInfo.descritivo : '';
+
+  showPage('nova-os');
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// UTILITIES
+// ══════════════════════════════════════════════════════════════════════
+function resetForm() {
+  editingId = null;
+  document.getElementById('os-form-title').textContent = 'Nova Ordem de Serviço';
+  document.getElementById('os-id').value = '';
+  document.getElementById('os-alert').style.display = 'none';
+  ['f-casa','f-tipo','f-nome','f-tema','f-data-inicio','f-hora-inicio','f-hora-termino',
+   'f-pax','f-contato','f-pagamento','f-comercial','f-operacional','f-briefing',
+   'f-espacos','f-acesso-obs','f-mobiliario-obs','f-montagem-desc','f-campo-livre',
+   'f-bar-info','f-cozinha-info'].forEach(id => {
+     const el = document.getElementById(id);
+     if (el) el.value = '';
+   });
+  document.getElementById('brigada-body').innerHTML = '';
+  BRIGADA_PADRÃO.forEach(b => addBrigadaRow(b));
+  document.getElementById('menu-bar-body').innerHTML = '';
+  ['Não Alcóolicas','Alcóolicas','Vinhos e Champanhes','Encerramento de Serviço'].forEach(s => addMenuBarRow({servico:s}));
+  document.getElementById('menu-cozinha-body').innerHTML = '';
+  ['Entradas','Saladas','Principais','Sobremesas','Encerramento de Serviço'].forEach(s => addMenuCozinhaRow({servico:s}));
+}
+
+function toggleSection(head) {
+  head.classList.toggle('collapsed');
+  head.nextElementSibling.classList.toggle('hidden');
+}
+
+function tryParse(val, fallback) {
+  if (!val) return fallback;
+  if (typeof val === 'object') return val;
+  try { return JSON.parse(val); } catch { return fallback; }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// USUÁRIOS (só admin)
+// ══════════════════════════════════════════════════════════════════════
+async function loadUsuarios() {
+  document.getElementById('usuarios-table-body').innerHTML = '<div class="loading"><div class="spinner"></div> Carregando...</div>';
+  const result = await dbQuery("SELECT id, nome, email, perfil, casa, created_at FROM usuarios ORDER BY id");
+  if (result.error || !result.rows) {
+    document.getElementById('usuarios-table-body').innerHTML = `<div class="loading">Erro: ${result.error}</div>`;
+    return;
+  }
+  const rows = result.rows;
+  if (!rows.length) {
+    document.getElementById('usuarios-table-body').innerHTML = '<div class="empty-state"><div class="empty-icon">👤</div><p>Nenhum usuário cadastrado.</p></div>';
+    return;
+  }
+  document.getElementById('usuarios-table-body').innerHTML = `<table>
+    <thead><tr><th>Nome</th><th>Email</th><th>Perfil</th><th>Casa</th><th>Cadastro</th><th>Ações</th></tr></thead>
+    <tbody>${rows.map(u => `<tr>
+      <td><strong>${u.nome}</strong></td>
+      <td style="color:var(--text-muted)">${u.email}</td>
+      <td><span class="badge ${u.perfil==='admin'?'badge-confirmado':u.perfil==='comercial'?'badge-realizado':'badge-rascunho'}">${u.perfil}</span></td>
+      <td>${u.casa || '—'}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${u.created_at ? new Date(u.created_at).toLocaleDateString('pt-BR') : '—'}</td>
+      <td>
+        <button class="btn btn-outline btn-sm" onclick="abrirModalUsuario(${u.id},'${u.nome}','${u.email}','${u.perfil}','${u.casa||''}')">Editar</button>
+        ${u.id !== currentUser.id ? `<button class="btn btn-danger btn-sm" onclick="excluirUsuario(${u.id},'${u.nome}')">Excluir</button>` : ''}
+      </td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function abrirModalUsuario(id, nome, email, perfil, casa) {
+  document.getElementById('modal-usuario-id').value = id || '';
+  document.getElementById('modal-nome').value = nome || '';
+  document.getElementById('modal-email').value = email || '';
+  document.getElementById('modal-senha').value = '';
+  document.getElementById('modal-perfil').value = perfil || 'operacional';
+  document.getElementById('modal-casa').value = casa || 'MEET & EAT';
+  document.getElementById('modal-usuario-title').textContent = id ? 'Editar Usuário' : 'Novo Usuário';
+  document.getElementById('modal-senha-hint').textContent = id ? '(deixe em branco para não alterar)' : '(obrigatória)';
+  document.getElementById('modal-alert').style.display = 'none';
+  document.getElementById('modal-usuario').style.display = 'flex';
+}
+
+function fecharModalUsuario() {
+  document.getElementById('modal-usuario').style.display = 'none';
+}
+
+async function salvarUsuario() {
+  const id = document.getElementById('modal-usuario-id').value;
+  const nome = document.getElementById('modal-nome').value.trim();
+  const email = document.getElementById('modal-email').value.trim();
+  const senhaRaw = document.getElementById('modal-senha').value;
+  const perfil = document.getElementById('modal-perfil').value;
+  const casa = document.getElementById('modal-casa').value;
+
+  if (!nome || !email) { showModalAlert('Preencha nome e email.', 'error'); return; }
+  if (!id && !senhaRaw) { showModalAlert('Informe uma senha para o novo usuário.', 'error'); return; }
+
+  showModalAlert('Salvando...', 'success');
+
+  let result;
+  if (id) {
+    if (senhaRaw) {
+      const hash = await sha256(senhaRaw);
+      result = await dbQuery("UPDATE usuarios SET nome=$1, email=$2, senha=$3, perfil=$4, casa=$5 WHERE id=$6", [nome, email, hash, perfil, casa, id]);
+    } else {
+      result = await dbQuery("UPDATE usuarios SET nome=$1, email=$2, perfil=$3, casa=$4 WHERE id=$5", [nome, email, perfil, casa, id]);
+    }
+  } else {
+    const hash = await sha256(senhaRaw);
+    result = await dbQuery("INSERT INTO usuarios (nome, email, senha, perfil, casa) VALUES ($1,$2,$3,$4,$5)", [nome, email, hash, perfil, casa]);
+  }
+
+  if (result.error) { showModalAlert('Erro: ' + result.error, 'error'); return; }
+  fecharModalUsuario();
+  loadUsuarios();
+}
+
+async function excluirUsuario(id, nome) {
+  if (!confirm(`Excluir o usuário "${nome}"? Esta ação não pode ser desfeita.`)) return;
+  const result = await dbQuery("DELETE FROM usuarios WHERE id=$1", [id]);
+  if (result.error) { alert('Erro ao excluir: ' + result.error); return; }
+  loadUsuarios();
+}
+
+function showModalAlert(msg, type) {
+  const el = document.getElementById('modal-alert');
+  el.style.display = 'block';
+  el.className = 'alert alert-' + type;
+  el.textContent = msg;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// TROCA DE SENHA
+// ══════════════════════════════════════════════════════════════════════
+async function trocarSenha() {
+  const atual = document.getElementById('senha-atual').value;
+  const nova = document.getElementById('senha-nova').value;
+  const confirma = document.getElementById('senha-confirma').value;
+
+  if (!atual || !nova || !confirma) { showSenhaAlert('Preencha todos os campos.', 'error'); return; }
+  if (nova !== confirma) { showSenhaAlert('A nova senha e a confirmação não coincidem.', 'error'); return; }
+  if (nova.length < 6) { showSenhaAlert('A nova senha deve ter pelo menos 6 caracteres.', 'error'); return; }
+
+  const hashAtual = await sha256(atual);
+  const check = await dbQuery("SELECT id FROM usuarios WHERE id=$1 AND senha=$2", [currentUser.id, hashAtual]);
+  if (!check.rows || check.rows.length === 0) { showSenhaAlert('Senha atual incorreta.', 'error'); return; }
+
+  const hashNova = await sha256(nova);
+  const result = await dbQuery("UPDATE usuarios SET senha=$1 WHERE id=$2", [hashNova, currentUser.id]);
+  if (result.error) { showSenhaAlert('Erro ao alterar senha.', 'error'); return; }
+
+  showSenhaAlert('Senha alterada com sucesso!', 'success');
+  document.getElementById('senha-atual').value = '';
+  document.getElementById('senha-nova').value = '';
+  document.getElementById('senha-confirma').value = '';
+}
+
+function showSenhaAlert(msg, type) {
+  const el = document.getElementById('senha-alert');
+  el.style.display = 'block';
+  el.className = 'alert alert-' + type;
+  el.textContent = msg;
+}
+
+// Enter no login
+document.getElementById('login-senha').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+// Fechar modal clicando fora
+document.getElementById('modal-usuario').addEventListener('click', function(e) { if (e.target === this) fecharModalUsuario(); });
+</script>
+</body>
+</html>
