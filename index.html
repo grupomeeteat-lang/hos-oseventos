@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -344,7 +343,6 @@
             <option value="">Todas as casas</option>
             <option>MEET & EAT</option>
             <option>Madonna Cucina</option>
-            <option>Match Point</option>
           </select>
           <select id="filtro-status" onchange="aplicarFiltros()" style="padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
             <option value="">Todos os status</option>
@@ -425,7 +423,6 @@
             <select id="modal-casa">
               <option>MEET & EAT</option>
               <option>Madonna Cucina</option>
-              <option>Match Point</option>
               <option>Todas</option>
             </select>
           </div>
@@ -451,6 +448,32 @@
         <div id="os-alert" style="display:none"></div>
         <input type="hidden" id="os-id">
 
+        <!-- HEADER RESUMO -->
+        <div id="os-resumo" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px;margin-bottom:20px;display:flex;flex-wrap:wrap;gap:20px;align-items:center">
+          <div style="flex:1;min-width:200px">
+            <div id="resumo-nome" style="font-family:'Playfair Display',serif;font-size:20px;color:var(--gold)">—</div>
+            <div id="resumo-espaco" style="font-size:12px;color:var(--text-muted);margin-top:2px">Espaço não definido</div>
+          </div>
+          <div style="display:flex;gap:24px;flex-wrap:wrap">
+            <div style="text-align:center">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim)">Data</div>
+              <div id="resumo-data" style="font-size:14px;font-weight:600;margin-top:2px">—</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim)">Dia</div>
+              <div id="resumo-dia" style="font-size:14px;font-weight:600;margin-top:2px">—</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim)">Horário</div>
+              <div id="resumo-horario" style="font-size:14px;font-weight:600;margin-top:2px">— → —</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim)">Convidados</div>
+              <div id="resumo-pax" style="font-size:14px;font-weight:600;color:var(--gold);margin-top:2px">—</div>
+            </div>
+          </div>
+        </div>
+
         <div class="os-form">
 
           <!-- CABEÇALHO -->
@@ -467,7 +490,6 @@
                   <select id="f-casa">
                     <option>MEET & EAT</option>
                     <option>Madonna Cucina</option>
-                    <option>Match Point</option>
                   </select>
                 </div>
                 <div class="field">
@@ -522,10 +544,7 @@
                   <label>Situação do Pagamento</label>
                   <select id="f-pagamento">
                     <option>Via Financeiro Adm</option>
-                    <option>Pago</option>
-                    <option>Parcialmente Pago</option>
-                    <option>Pendente</option>
-                    <option>Sinal Pago</option>
+                    <option>Via Caixa Restaurante</option>
                   </select>
                 </div>
               </div>
@@ -538,15 +557,6 @@
                   <label>Responsável Operacional</label>
                   <input type="text" id="f-operacional" placeholder="Ex: Alexandre e Jailson">
                 </div>
-              </div>
-              <div class="field">
-                <label>Status</label>
-                <select id="f-status">
-                  <option value="rascunho">Rascunho</option>
-                  <option value="confirmado">Confirmado</option>
-                  <option value="realizado">Realizado</option>
-                  <option value="cancelado">Cancelado</option>
-                </select>
               </div>
               <div class="field" style="margin-top:14px">
                 <label>Briefing do Cliente</label>
@@ -571,14 +581,12 @@
                 <div class="field">
                   <label>Acesso de Entrada</label>
                   <select id="f-acesso">
-                    <option>Hall Principal</option>
-                    <option>Entrada de Serviço</option>
-                    <option>Acesso Direto</option>
+                    <option>Entrada Principal</option>
                   </select>
                 </div>
               </div>
               <div class="field" style="margin-bottom:14px">
-                <label>Observações de Acesso</label>
+                <label>Observações de Portaria</label>
                 <textarea id="f-acesso-obs" rows="2" placeholder="Ex: 2 hostess, pulseiras, check-in..."></textarea>
               </div>
               <div class="field-row col2" style="margin-bottom:14px">
@@ -587,8 +595,6 @@
                   <select id="f-mobiliario">
                     <option>Casa</option>
                     <option>Locação</option>
-                    <option>Misto</option>
-                    <option>N/A</option>
                   </select>
                 </div>
                 <div class="field">
@@ -611,17 +617,16 @@
                     <option>Contratado pelo Cliente</option>
                     <option>Contratado Casa</option>
                     <option>Não Contratado</option>
-                    <option>Cliente paga por carro</option>
                   </select>
                 </div>
               </div>
               <div class="field-row col3" style="margin-bottom:14px">
                 <div class="field">
-                  <label>Artístico</label>
+                  <label>Artístico / DJ / Banda</label>
                   <select id="f-artistico">
-                    <option>Não haverá</option>
-                    <option>Cliente</option>
-                    <option>Contratado Casa</option>
+                    <option>Pelo Cliente</option>
+                    <option>Pela Casa</option>
+                    <option>Não se aplica</option>
                   </select>
                 </div>
                 <div class="field">
@@ -642,25 +647,9 @@
                   </select>
                 </div>
               </div>
-              <div class="field-row col2" style="margin-bottom:14px">
-                <div class="field">
-                  <label>Clientes Menores?</label>
-                  <select id="f-menores">
-                    <option>Não</option>
-                    <option>Sim</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label>Montagem necessária?</label>
-                  <select id="f-montagem">
-                    <option>Sim</option>
-                    <option>Não</option>
-                  </select>
-                </div>
-              </div>
               <div class="field">
-                <label>Descrição da Montagem / Layout</label>
-                <textarea id="f-montagem-desc" rows="3" placeholder="Descreva o layout, disposição de móveis, espaços..."></textarea>
+                <label>Observação dos Menores</label>
+                <textarea id="f-menores" rows="2" placeholder="Observações sobre clientes menores de idade..."></textarea>
               </div>
             </div>
           </div>
@@ -673,22 +662,8 @@
               <span class="toggle-arrow">▼</span>
             </div>
             <div class="section-body">
-              <table class="brigada-table">
-                <thead>
-                  <tr>
-                    <th style="width:200px">Função</th>
-                    <th style="width:60px">Qtd</th>
-                    <th style="width:100px">Valor Unit. (R$)</th>
-                    <th>Observações</th>
-                    <th style="width:40px"></th>
-                  </tr>
-                </thead>
-                <tbody id="brigada-body"></tbody>
-              </table>
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
-                <button class="btn btn-ghost btn-sm" onclick="addBrigadaRow()">＋ Adicionar função</button>
-                <div class="brigada-total">Total Brigada: <span id="brigada-total">R$ 0,00</span> <span style="font-size:11px;color:var(--text-dim)">(+ 15% taxa)</span></div>
-              </div>
+              <div id="brigada-body" style="display:flex;flex-wrap:wrap;gap:10px 24px;"></div>
+              <button class="btn btn-ghost btn-sm" style="margin-top:14px" onclick="addBrigadaRow()">＋ Adicionar função</button>
             </div>
           </div>
 
@@ -700,8 +675,9 @@
               <span class="toggle-arrow">▼</span>
             </div>
             <div class="section-body">
-              <div style="display:grid;grid-template-columns:160px 90px 90px 1fr 180px 40px;gap:8px;margin-bottom:8px">
-                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);padding:0 2px">Serviço</div>
+              <div style="display:grid;grid-template-columns:140px 140px 90px 90px 1fr 180px 36px;gap:8px;margin-bottom:8px">
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)">Menu Bar</div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)">Serviço</div>
                 <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)">Hr Início</div>
                 <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)">Hr Fim</div>
                 <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)">Descritivo</div>
@@ -725,8 +701,9 @@
               <span class="toggle-arrow">▼</span>
             </div>
             <div class="section-body">
-              <div style="display:grid;grid-template-columns:160px 90px 90px 1fr 180px 40px;gap:8px;margin-bottom:8px">
-                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);padding:0 2px">Serviço</div>
+              <div style="display:grid;grid-template-columns:140px 140px 90px 90px 1fr 180px 36px;gap:8px;margin-bottom:8px">
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)">Menu Cozinha</div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)">Serviço</div>
                 <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)">Hr Início</div>
                 <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)">Hr Fim</div>
                 <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)">Descritivo</div>
@@ -753,6 +730,51 @@
               <div class="field">
                 <label>Campo Livre — Observações e Alertas</label>
                 <textarea id="f-campo-livre" rows="5" placeholder="Segurança, manutenção, logística, rádios, pontos de atenção..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- MONTAGEM -->
+          <div class="section-block">
+            <div class="section-head" onclick="toggleSection(this)">
+              <span class="section-icon">🔧</span>
+              <span class="section-title">Montagem</span>
+              <span class="toggle-arrow">▼</span>
+            </div>
+            <div class="section-body">
+              <div class="field" style="margin-bottom:16px">
+                <label>Descrever Montagem</label>
+                <textarea id="f-montagem-desc" rows="4" placeholder="Descreva a montagem, layout, disposição de móveis e espaços..."></textarea>
+              </div>
+              <div class="field">
+                <label>Anexar Layout</label>
+                <div id="layout-dropzone" onclick="document.getElementById('f-layout-input').click()"
+                  style="border:2px dashed var(--border);border-radius:8px;padding:32px;text-align:center;cursor:pointer;transition:border-color .2s;background:var(--surface2)">
+                  <div style="font-size:28px;margin-bottom:8px">📎</div>
+                  <div style="font-size:13px;color:var(--text-muted)">Clique para anexar ou arraste o arquivo aqui</div>
+                  <div style="font-size:11px;color:var(--text-dim);margin-top:4px">PDF, JPG ou PNG</div>
+                </div>
+                <input type="file" id="f-layout-input" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleLayoutFile(this)">
+              </div>
+              <div id="layout-preview" style="margin-top:12px;display:none">
+                <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:8px">Prévia do arquivo</div>
+                <div id="layout-preview-content"></div>
+                <button class="btn btn-danger btn-sm" style="margin-top:8px" onclick="removerLayout()">✕ Remover arquivo</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- TEMPOS E MOVIMENTOS -->
+          <div class="section-block">
+            <div class="section-head" onclick="toggleSection(this)">
+              <span class="section-icon">⏱️</span>
+              <span class="section-title">Tempos e Movimentos</span>
+              <span class="toggle-arrow">▼</span>
+            </div>
+            <div class="section-body">
+              <div class="field">
+                <label>Cronograma do Evento</label>
+                <textarea id="f-tempos" rows="6" placeholder="Descreva o cronograma e tempos de cada etapa do evento...&#10;&#10;Ex:&#10;06h00 — Início da montagem&#10;11h00 — Pausa montagem (operação térreo)&#10;18h00 — Abertura de portas&#10;19h00 — Início do serviço&#10;00h30 — Encerramento"></textarea>
               </div>
             </div>
           </div>
@@ -1010,50 +1032,37 @@ function renderEventosTable(containerId, eventos) {
 // FORM — Brigada
 // ══════════════════════════════════════════════════════════════════════
 const BRIGADA_PADRÃO = [
-  { funcao: 'Maître', qtd: 1, valor: 150, obs: '' },
-  { funcao: 'Chefe de Fila', qtd: 1, valor: 150, obs: '' },
-  { funcao: 'Garçon', qtd: 6, valor: 150, obs: '' },
-  { funcao: 'Cumin', qtd: 2, valor: 150, obs: '' },
-  { funcao: 'Limpeza', qtd: 2, valor: 150, obs: '' },
-  { funcao: 'Chefe de Bar', qtd: 1, valor: 200, obs: '' },
-  { funcao: 'Bartender', qtd: 3, valor: 180, obs: '' },
-  { funcao: 'Barback', qtd: 2, valor: 150, obs: '' },
-  { funcao: 'Chef de Cozinha', qtd: 1, valor: 250, obs: '' },
-  { funcao: 'Segurança', qtd: 1, valor: 220, obs: '' },
+  { funcao: 'Maître', qtd: 1 },
+  { funcao: 'Chefe de Fila', qtd: 1 },
+  { funcao: 'Garçon', qtd: 6 },
+  { funcao: 'Cumin', qtd: 2 },
+  { funcao: 'Limpeza', qtd: 2 },
+  { funcao: 'Chefe de Bar', qtd: 1 },
+  { funcao: 'Bartender', qtd: 3 },
+  { funcao: 'Barback', qtd: 2 },
+  { funcao: 'Chef de Cozinha', qtd: 1 },
+  { funcao: 'Segurança', qtd: 1 },
 ];
 
 function addBrigadaRow(data = {}) {
-  const tbody = document.getElementById('brigada-body');
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td><input type="text" class="b-funcao" placeholder="Função" value="${data.funcao||''}"></td>
-    <td><input type="number" class="b-qtd" min="0" value="${data.qtd||1}" onchange="calcBrigada()"></td>
-    <td><input type="number" class="b-valor" min="0" value="${data.valor||150}" onchange="calcBrigada()"></td>
-    <td><input type="text" class="b-obs" placeholder="Obs" value="${data.obs||''}"></td>
-    <td><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove();calcBrigada()">✕</button></td>
+  const container = document.getElementById('brigada-body');
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;';
+  div.innerHTML = `
+    <input type="text" class="b-funcao" placeholder="Função" value="${data.funcao||''}"
+      style="background:transparent;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;width:140px;outline:none">
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <input type="number" class="b-qtd" min="0" value="${data.qtd||1}"
+      style="background:transparent;border:none;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;width:36px;outline:none;text-align:center">
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;padding:0 2px;line-height:1">✕</button>
   `;
-  tbody.appendChild(tr);
-  calcBrigada();
-}
-
-function calcBrigada() {
-  const rows = document.querySelectorAll('#brigada-body tr');
-  let total = 0;
-  rows.forEach(r => {
-    const qtd = parseFloat(r.querySelector('.b-qtd').value) || 0;
-    const val = parseFloat(r.querySelector('.b-valor').value) || 0;
-    total += qtd * val;
-  });
-  const comTaxa = total * 1.15;
-  document.getElementById('brigada-total').textContent = 'R$ ' + comTaxa.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  container.appendChild(div);
 }
 
 function getBrigadaData() {
-  return Array.from(document.querySelectorAll('#brigada-body tr')).map(r => ({
-    funcao: r.querySelector('.b-funcao').value,
-    qtd: parseFloat(r.querySelector('.b-qtd').value) || 0,
-    valor: parseFloat(r.querySelector('.b-valor').value) || 0,
-    obs: r.querySelector('.b-obs').value,
+  return Array.from(document.querySelectorAll('#brigada-body > div')).map(d => ({
+    funcao: d.querySelector('.b-funcao').value,
+    qtd: parseInt(d.querySelector('.b-qtd').value) || 0,
   }));
 }
 
@@ -1061,24 +1070,30 @@ function getBrigadaData() {
 // FORM — Menu Bar / Cozinha
 // ══════════════════════════════════════════════════════════════════════
 function addMenuBarRow(data = {}) {
-  addMenuRow('menu-bar-body', data, [
-    'Não Alcóolicas','Alcóolicas','Vinhos e Champanhes','Open Bar','Pausa de Serviço','Encerramento de Serviço'
-  ]);
+  addMenuRow('menu-bar-body', data,
+    ['Menu Aberto','Menu Fechado','Open Bar'],
+    ['Não Alcóolicas','Alcóolicas','Vinhos e Champanhes','Pausa de Serviço','Encerramento de Serviço']
+  );
 }
 
 function addMenuCozinhaRow(data = {}) {
-  addMenuRow('menu-cozinha-body', data, [
-    'Entradas','Saladas','Principais','Sobremesas','Pausa de Serviço','Encerramento de Serviço'
-  ]);
+  addMenuRow('menu-cozinha-body', data,
+    ['Coquetel Volante','Empratado','Cardápio Aberto'],
+    ['Entradas','Saladas','Principais','Sobremesas','Pausa de Serviço','Encerramento de Serviço']
+  );
 }
 
-function addMenuRow(containerId, data, opcoes) {
+function addMenuRow(containerId, data, opcoesCategoria, opcoesServico) {
   const container = document.getElementById(containerId);
   const div = document.createElement('div');
   div.className = 'menu-row';
+  div.style.gridTemplateColumns = '140px 140px 90px 90px 1fr 180px 36px';
   div.innerHTML = `
     <select style="padding:7px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-family:'DM Sans',sans-serif">
-      ${opcoes.map(o => `<option${data.servico===o?' selected':''}>${o}</option>`).join('')}
+      ${opcoesCategoria.map(o => `<option${data.categoria===o?' selected':''}>${o}</option>`).join('')}
+    </select>
+    <select style="padding:7px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-family:'DM Sans',sans-serif">
+      ${opcoesServico.map(o => `<option${data.servico===o?' selected':''}>${o}</option>`).join('')}
     </select>
     <input type="time" value="${data.hr_ini||''}" style="padding:7px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px">
     <input type="time" value="${data.hr_fim||''}" style="padding:7px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px">
@@ -1092,7 +1107,7 @@ function addMenuRow(containerId, data, opcoes) {
 function getMenuData(containerId) {
   return Array.from(document.querySelectorAll('#' + containerId + ' .menu-row')).map(r => {
     const inputs = r.querySelectorAll('select, input, textarea');
-    return { servico: inputs[0].value, hr_ini: inputs[1].value, hr_fim: inputs[2].value, descritivo: inputs[3].value, obs: inputs[4].value };
+    return { categoria: inputs[0].value, servico: inputs[1].value, hr_ini: inputs[2].value, hr_fim: inputs[3].value, descritivo: inputs[4].value, obs: inputs[5].value };
   });
 }
 
@@ -1144,6 +1159,8 @@ async function salvarOS() {
     menu_bar: menuBar,
     menu_cozinha: menuCozinha,
     campo_livre: document.getElementById('f-campo-livre').value,
+    montagem_descricao: document.getElementById('f-montagem-desc').value,
+    tempos_movimentos: document.getElementById('f-tempos').value,
     criado_por: currentUser.nome,
   };
 
@@ -1358,8 +1375,8 @@ function resetForm() {
   document.getElementById('os-alert').style.display = 'none';
   ['f-casa','f-tipo','f-nome','f-tema','f-data-inicio','f-hora-inicio','f-hora-termino',
    'f-pax','f-contato','f-pagamento','f-comercial','f-operacional','f-briefing',
-   'f-espacos','f-acesso-obs','f-mobiliario-obs','f-montagem-desc','f-campo-livre',
-   'f-bar-info','f-cozinha-info'].forEach(id => {
+   'f-espacos','f-acesso-obs','f-mobiliario-obs','f-menores','f-montagem-desc','f-campo-livre',
+   'f-bar-info','f-cozinha-info','f-tempos'].forEach(id => {
      const el = document.getElementById(id);
      if (el) el.value = '';
    });
@@ -1369,7 +1386,69 @@ function resetForm() {
   ['Não Alcóolicas','Alcóolicas','Vinhos e Champanhes','Encerramento de Serviço'].forEach(s => addMenuBarRow({servico:s}));
   document.getElementById('menu-cozinha-body').innerHTML = '';
   ['Entradas','Saladas','Principais','Sobremesas','Encerramento de Serviço'].forEach(s => addMenuCozinhaRow({servico:s}));
+  removerLayout();
 }
+
+// ── LAYOUT FILE UPLOAD ──
+let layoutFileData = null;
+
+function handleLayoutFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    layoutFileData = { name: file.name, type: file.type, data: e.target.result };
+    const preview = document.getElementById('layout-preview');
+    const content = document.getElementById('layout-preview-content');
+    preview.style.display = 'block';
+
+    if (file.type === 'application/pdf') {
+      content.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--surface2);border:1px solid var(--border);border-radius:6px">
+          <div style="font-size:32px">📄</div>
+          <div>
+            <div style="font-size:13px;font-weight:600">${file.name}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">PDF — ${(file.size/1024).toFixed(0)} KB</div>
+          </div>
+          <a href="${e.target.result}" target="_blank" class="btn btn-outline btn-sm" style="margin-left:auto">Abrir</a>
+        </div>`;
+    } else {
+      content.innerHTML = `<img src="${e.target.result}" style="max-width:100%;max-height:400px;border-radius:6px;border:1px solid var(--border);object-fit:contain">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px">${file.name}</div>`;
+    }
+
+    // Dropzone feedback
+    document.getElementById('layout-dropzone').style.borderColor = 'var(--gold)';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removerLayout() {
+  layoutFileData = null;
+  document.getElementById('layout-preview').style.display = 'none';
+  document.getElementById('layout-preview-content').innerHTML = '';
+  document.getElementById('f-layout-input').value = '';
+  document.getElementById('layout-dropzone').style.borderColor = 'var(--border)';
+}
+
+// Drag and drop no dropzone
+document.addEventListener('DOMContentLoaded', () => {
+  const dz = document.getElementById('layout-dropzone');
+  if (!dz) return;
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor = 'var(--gold)'; });
+  dz.addEventListener('dragleave', () => { if (!layoutFileData) dz.style.borderColor = 'var(--border)'; });
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      const input = document.getElementById('f-layout-input');
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+      handleLayoutFile(input);
+    }
+  });
+});
 
 function toggleSection(head) {
   head.classList.toggle('collapsed');
@@ -1480,8 +1559,39 @@ function showSenhaAlert(msg, type) {
   el.textContent = msg;
 }
 
+// ── RESUMO AO VIVO ──
+function atualizarResumo() {
+  const nome = document.getElementById('f-nome')?.value || '—';
+  const espaco = document.getElementById('f-espacos')?.value || 'Espaço não definido';
+  const dataRaw = document.getElementById('f-data-inicio')?.value;
+  const hrIni = document.getElementById('f-hora-inicio')?.value || '—';
+  const hrFim = document.getElementById('f-hora-termino')?.value || '—';
+  const pax = document.getElementById('f-pax')?.value || '—';
+
+  const DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  let dataFmt = '—', diaFmt = '—';
+  if (dataRaw) {
+    const d = new Date(dataRaw + 'T12:00:00');
+    dataFmt = d.toLocaleDateString('pt-BR');
+    diaFmt = DIAS[d.getDay()];
+  }
+
+  document.getElementById('resumo-nome').textContent = nome || '—';
+  document.getElementById('resumo-espaco').textContent = espaco.split('\n')[0] || 'Espaço não definido';
+  document.getElementById('resumo-data').textContent = dataFmt;
+  document.getElementById('resumo-dia').textContent = diaFmt;
+  document.getElementById('resumo-horario').textContent = `${hrIni} → ${hrFim}`;
+  document.getElementById('resumo-pax').textContent = pax ? `${pax} pax` : '—';
+}
+
 // Fechar modal clicando fora
 document.getElementById('modal-usuario').addEventListener('click', function(e) { if (e.target === this) fecharModalUsuario(); });
+
+// Wiring — atualiza resumo ao digitar
+['f-nome','f-espacos','f-data-inicio','f-hora-inicio','f-hora-termino','f-pax'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', atualizarResumo);
+  document.getElementById(id)?.addEventListener('change', atualizarResumo);
+});
 </script>
 </body>
 </html>
