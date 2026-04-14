@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -547,6 +548,16 @@
                     <option>Via Caixa Restaurante</option>
                   </select>
                 </div>
+                <div class="field">
+                  <label>Status da O.S.</label>
+                  <select id="f-status">
+                    <option value="rascunho">Rascunho</option>
+                    <option value="confirmado">Confirmado</option>
+                    <option value="em_andamento">Em Andamento</option>
+                    <option value="concluido">Concluído</option>
+                    <option value="cancelado">Cancelado</option>
+                  </select>
+                </div>
               </div>
               <div class="field-row col2" style="margin-bottom:14px">
                 <div class="field">
@@ -742,6 +753,16 @@
               <span class="toggle-arrow">▼</span>
             </div>
             <div class="section-body">
+              <div class="field" style="margin-bottom:16px">
+                <label>Tipo de Montagem</label>
+                <select id="f-montagem">
+                  <option value="">— Selecione —</option>
+                  <option value="Montagem pelo cliente">Montagem pelo cliente</option>
+                  <option value="Montagem pela equipe HOS">Montagem pela equipe HOS</option>
+                  <option value="Montagem compartilhada">Montagem compartilhada</option>
+                  <option value="Sem montagem">Sem montagem</option>
+                </select>
+              </div>
               <div class="field" style="margin-bottom:16px">
                 <label>Descrever Montagem</label>
                 <textarea id="f-montagem-desc" rows="4" placeholder="Descreva a montagem, layout, disposição de móveis e espaços..."></textarea>
@@ -1159,7 +1180,6 @@ async function salvarOS() {
     menu_bar: menuBar,
     menu_cozinha: menuCozinha,
     campo_livre: document.getElementById('f-campo-livre').value,
-    montagem_descricao: document.getElementById('f-montagem-desc').value,
     tempos_movimentos: document.getElementById('f-tempos').value,
     criado_por: currentUser.nome,
   };
@@ -1374,8 +1394,8 @@ function resetForm() {
   document.getElementById('os-id').value = '';
   document.getElementById('os-alert').style.display = 'none';
   ['f-casa','f-tipo','f-nome','f-tema','f-data-inicio','f-hora-inicio','f-hora-termino',
-   'f-pax','f-contato','f-pagamento','f-comercial','f-operacional','f-briefing',
-   'f-espacos','f-acesso-obs','f-mobiliario-obs','f-menores','f-montagem-desc','f-campo-livre',
+   'f-pax','f-contato','f-pagamento','f-status','f-comercial','f-operacional','f-briefing',
+   'f-espacos','f-acesso-obs','f-mobiliario-obs','f-menores','f-montagem','f-montagem-desc','f-campo-livre',
    'f-bar-info','f-cozinha-info','f-tempos'].forEach(id => {
      const el = document.getElementById(id);
      if (el) el.value = '';
