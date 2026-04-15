@@ -576,95 +576,6 @@
             </div>
           </div>
 
-          <!-- INFRAESTRUTURA -->
-          <div class="section-block">
-            <div class="section-head" onclick="toggleSection(this)">
-              <span class="section-icon">🏛️</span>
-              <span class="section-title">Infraestrutura</span>
-              <span class="toggle-arrow">▼</span>
-            </div>
-            <div class="section-body">
-              <div class="field-row col2" style="margin-bottom:14px">
-                <div class="field">
-                  <label>Espaços Utilizados</label>
-                  <textarea id="f-espacos" rows="2" placeholder="Ex: MEET - Rooftop&#10;MEET - Bar Secreto"></textarea>
-                </div>
-                <div class="field">
-                  <label>Acesso de Entrada</label>
-                  <select id="f-acesso">
-                    <option>Entrada Principal</option>
-                  </select>
-                </div>
-              </div>
-              <div class="field" style="margin-bottom:14px">
-                <label>Observações de Portaria</label>
-                <textarea id="f-acesso-obs" rows="2" placeholder="Ex: 2 hostess, pulseiras, check-in..."></textarea>
-              </div>
-              <div class="field-row col2" style="margin-bottom:14px">
-                <div class="field">
-                  <label>Mobiliário</label>
-                  <select id="f-mobiliario">
-                    <option>Casa</option>
-                    <option>Locação</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label>Obs. Mobiliário</label>
-                  <input type="text" id="f-mobiliario-obs" placeholder="Ex: 12 Puffs + 4 Bistrô (locação)">
-                </div>
-              </div>
-              <div class="field-row col2" style="margin-bottom:14px">
-                <div class="field">
-                  <label>Fotografia / Vídeo</label>
-                  <select id="f-fotografia">
-                    <option>Autorizado</option>
-                    <option>Em Aprovação</option>
-                    <option>Não Autorizado</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label>Valet</label>
-                  <select id="f-valet">
-                    <option>Contratado pelo Cliente</option>
-                    <option>Contratado Casa</option>
-                    <option>Não Contratado</option>
-                  </select>
-                </div>
-              </div>
-              <div class="field-row col3" style="margin-bottom:14px">
-                <div class="field">
-                  <label>Artístico / DJ / Banda</label>
-                  <select id="f-artistico">
-                    <option>Pelo Cliente</option>
-                    <option>Pela Casa</option>
-                    <option>Não se aplica</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label>Gerador</label>
-                  <select id="f-gerador">
-                    <option>Contrado Casa</option>
-                    <option>Contrato Cliente</option>
-                    <option>Não Contratado</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label>Ambulância</label>
-                  <select id="f-ambulancia">
-                    <option>Não Contratado</option>
-                    <option>Contratado Cliente</option>
-                    <option>UTI</option>
-                    <option>Remoção</option>
-                  </select>
-                </div>
-              </div>
-              <div class="field">
-                <label>Observação dos Menores</label>
-                <textarea id="f-menores" rows="2" placeholder="Observações sobre clientes menores de idade..."></textarea>
-              </div>
-            </div>
-          </div>
-
           <!-- BRIGADA -->
           <div class="section-block">
             <div class="section-head" onclick="toggleSection(this)">
@@ -773,13 +684,13 @@
                   style="border:2px dashed var(--border);border-radius:8px;padding:32px;text-align:center;cursor:pointer;transition:border-color .2s;background:var(--surface2)">
                   <div style="font-size:28px;margin-bottom:8px">📎</div>
                   <div style="font-size:13px;color:var(--text-muted)">Clique para anexar ou arraste o arquivo aqui</div>
-                  <div style="font-size:11px;color:var(--text-dim);margin-top:4px">PDF, JPG ou PNG</div>
+                  <div style="font-size:11px;color:var(--text-dim);margin-top:4px">PDF, JPG ou PNG — múltiplos arquivos permitidos</div>
                 </div>
                 <input type="file" id="f-layout-input" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleLayoutFile(this)">
               </div>
               <div id="layout-preview" style="margin-top:12px;display:none">
-                <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:8px">Prévia do arquivo</div>
-                <div id="layout-preview-content"></div>
+                <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:8px">Arquivos anexados</div>
+                <div id="layout-preview-content" style="display:flex;flex-wrap:wrap;gap:8px"></div>
                 <button class="btn btn-danger btn-sm" style="margin-top:8px" onclick="removerLayout()">✕ Remover arquivo</button>
               </div>
             </div>
@@ -796,6 +707,95 @@
               <div class="field">
                 <label>Cronograma do Evento</label>
                 <textarea id="f-tempos" rows="6" placeholder="Descreva o cronograma e tempos de cada etapa do evento...&#10;&#10;Ex:&#10;06h00 — Início da montagem&#10;11h00 — Pausa montagem (operação térreo)&#10;18h00 — Abertura de portas&#10;19h00 — Início do serviço&#10;00h30 — Encerramento"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- INFRAESTRUTURA -->
+          <div class="section-block">
+            <div class="section-head" onclick="toggleSection(this)">
+              <span class="section-icon">🏛️</span>
+              <span class="section-title">Infraestrutura</span>
+              <span class="toggle-arrow">▼</span>
+            </div>
+            <div class="section-body">
+              <div class="field-row col2" style="margin-bottom:14px">
+                <div class="field">
+                  <label>Espaços Utilizados</label>
+                  <textarea id="f-espacos" rows="2" placeholder="Ex: MEET - Rooftop&#10;MEET - Bar Secreto"></textarea>
+                </div>
+                <div class="field">
+                  <label>Acesso de Entrada</label>
+                  <select id="f-acesso">
+                    <option>Entrada Principal</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field" style="margin-bottom:14px">
+                <label>Observações de Portaria</label>
+                <textarea id="f-acesso-obs" rows="2" placeholder="Ex: 2 hostess, pulseiras, check-in..."></textarea>
+              </div>
+              <div class="field-row col2" style="margin-bottom:14px">
+                <div class="field">
+                  <label>Mobiliário</label>
+                  <select id="f-mobiliario">
+                    <option>Casa</option>
+                    <option>Locação</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Obs. Mobiliário</label>
+                  <input type="text" id="f-mobiliario-obs" placeholder="Ex: 12 Puffs + 4 Bistrô (locação)">
+                </div>
+              </div>
+              <div class="field-row col2" style="margin-bottom:14px">
+                <div class="field">
+                  <label>Fotografia / Vídeo</label>
+                  <select id="f-fotografia">
+                    <option>Autorizado</option>
+                    <option>Em Aprovação</option>
+                    <option>Não Autorizado</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Valet</label>
+                  <select id="f-valet">
+                    <option>Contratado pelo Cliente</option>
+                    <option>Contratado Casa</option>
+                    <option>Não Contratado</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field-row col3" style="margin-bottom:14px">
+                <div class="field">
+                  <label>Artístico / DJ / Banda</label>
+                  <select id="f-artistico">
+                    <option>Pelo Cliente</option>
+                    <option>Pela Casa</option>
+                    <option>Não se aplica</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Gerador</label>
+                  <select id="f-gerador">
+                    <option>Contrado Casa</option>
+                    <option>Contrato Cliente</option>
+                    <option>Não Contratado</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Ambulância</label>
+                  <select id="f-ambulancia">
+                    <option>Não Contratado</option>
+                    <option>Contratado Cliente</option>
+                    <option>UTI</option>
+                    <option>Remoção</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label>Observação dos Menores</label>
+                <textarea id="f-menores" rows="2" placeholder="Observações sobre clientes menores de idade..."></textarea>
               </div>
             </div>
           </div>
@@ -1033,7 +1033,7 @@ function renderEventosTable(containerId, eventos) {
     </tr></thead>
     <tbody>${eventos.map(e => `
       <tr>
-        <td><strong>${e.nome_evento || '—'}</strong><br><span style="font-size:11px;color:var(--text-muted)">${e.tipo_evento || ''}</span></td>
+        <td><strong>${tituloOS(e)}</strong><br><span style="font-size:11px;color:var(--text-muted)">${e.tipo_evento || ''}</span></td>
         <td>${e.casa || '—'}</td>
         <td>${e.data_inicio ? new Date(e.data_inicio).toLocaleDateString('pt-BR') : '—'}</td>
         <td>${e.num_convidados || '—'}</td>
@@ -1181,6 +1181,7 @@ async function salvarOS() {
     menu_cozinha: menuCozinha,
     campo_livre: document.getElementById('f-campo-livre').value,
     tempos_movimentos: document.getElementById('f-tempos').value,
+    layout_anexos: layoutFilesData.length ? JSON.stringify(layoutFilesData) : null,
     criado_por: currentUser.nome,
   };
 
@@ -1231,7 +1232,7 @@ async function verOS(id) {
     <div class="os-view">
       <div class="os-view-header">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-          <div class="os-view-title">${e.nome_evento || '—'}</div>
+          <div class="os-view-title">${tituloOS(e)}</div>
           <span class="badge badge-${e.status}">${e.status}</span>
         </div>
         <div class="os-meta">
@@ -1269,23 +1270,18 @@ async function verOS(id) {
           <thead><tr>
             <th style="text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);border-bottom:1px solid var(--border)">Função</th>
             <th style="text-align:center;padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);border-bottom:1px solid var(--border)">Qtd</th>
-            <th style="text-align:right;padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);border-bottom:1px solid var(--border)">Valor Unit.</th>
-            <th style="text-align:right;padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);border-bottom:1px solid var(--border)">Subtotal</th>
-            <th style="text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);border-bottom:1px solid var(--border)">Obs</th>
           </tr></thead>
           <tbody>
             ${brigada.map(b => `<tr>
               <td style="padding:7px 8px;border-bottom:1px solid var(--border)">${b.funcao}</td>
-              <td style="padding:7px 8px;border-bottom:1px solid var(--border);text-align:center">${b.qtd}</td>
-              <td style="padding:7px 8px;border-bottom:1px solid var(--border);text-align:right">R$ ${(b.valor||0).toFixed(2)}</td>
-              <td style="padding:7px 8px;border-bottom:1px solid var(--border);text-align:right">R$ ${((b.qtd||0)*(b.valor||0)).toFixed(2)}</td>
-              <td style="padding:7px 8px;border-bottom:1px solid var(--border);color:var(--text-muted);font-size:12px">${b.obs||''}</td>
+              <td style="padding:7px 8px;border-bottom:1px solid var(--border);text-align:center;font-weight:700;color:var(--gold)">${b.qtd}</td>
             </tr>`).join('')}
+            <tr>
+              <td style="padding:8px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)">Total</td>
+              <td style="padding:8px 8px;text-align:center;font-weight:700;color:var(--gold);font-size:15px">${brigada.reduce((s,b)=>s+(b.qtd||0),0)}</td>
+            </tr>
           </tbody>
         </table>
-        <div style="text-align:right;margin-top:10px;font-size:13px;color:var(--text-muted)">
-          Total + 15% taxa: <strong style="color:var(--gold);font-size:15px">R$ ${(brigada.reduce((s,b)=>s+(b.qtd||0)*(b.valor||0),0)*1.15).toFixed(2)}</strong>
-        </div>
       `) : ''}
 
       ${menuBar.filter(r=>r.servico!=='_info').length ? viewSection('🍸 Menu Bar', menuTable(menuBar.filter(r=>r.servico!=='_info')) + (barInfo ? `<div style="margin-top:12px;padding:12px;background:var(--surface2);border-radius:6px;font-size:13px">${barInfo.descritivo}</div>` : '')) : ''}
@@ -1363,6 +1359,10 @@ async function editarOS(id) {
   document.getElementById('f-montagem-desc').value = e.montagem_descricao || '';
   document.getElementById('f-campo-livre').value = e.campo_livre || '';
 
+  // Anexos
+  layoutFilesData = tryParse(e.layout_anexos, []);
+  renderLayoutPreviews();
+
   // Brigada
   document.getElementById('brigada-body').innerHTML = '';
   const brigada = tryParse(e.brigada, []);
@@ -1410,45 +1410,55 @@ function resetForm() {
 }
 
 // ── LAYOUT FILE UPLOAD ──
-let layoutFileData = null;
+let layoutFilesData = [];
 
 function handleLayoutFile(input) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = function(e) {
-    layoutFileData = { name: file.name, type: file.type, data: e.target.result };
-    const preview = document.getElementById('layout-preview');
-    const content = document.getElementById('layout-preview-content');
-    preview.style.display = 'block';
-
-    if (file.type === 'application/pdf') {
-      content.innerHTML = `
-        <div style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--surface2);border:1px solid var(--border);border-radius:6px">
-          <div style="font-size:32px">📄</div>
-          <div>
-            <div style="font-size:13px;font-weight:600">${file.name}</div>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">PDF — ${(file.size/1024).toFixed(0)} KB</div>
-          </div>
-          <a href="${e.target.result}" target="_blank" class="btn btn-outline btn-sm" style="margin-left:auto">Abrir</a>
-        </div>`;
-    } else {
-      content.innerHTML = `<img src="${e.target.result}" style="max-width:100%;max-height:400px;border-radius:6px;border:1px solid var(--border);object-fit:contain">
-        <div style="font-size:11px;color:var(--text-muted);margin-top:6px">${file.name}</div>`;
-    }
-
-    // Dropzone feedback
-    document.getElementById('layout-dropzone').style.borderColor = 'var(--gold)';
+  reader.onload = function(ev) {
+    layoutFilesData.push({ name: file.name, type: file.type, size: file.size, data: ev.target.result });
+    renderLayoutPreviews();
+    input.value = '';
   };
   reader.readAsDataURL(file);
 }
 
+function renderLayoutPreviews() {
+  const preview = document.getElementById('layout-preview');
+  const content = document.getElementById('layout-preview-content');
+  if (layoutFilesData.length === 0) {
+    preview.style.display = 'none';
+    content.innerHTML = '';
+    document.getElementById('layout-dropzone').style.borderColor = 'var(--border)';
+    return;
+  }
+  preview.style.display = 'block';
+  document.getElementById('layout-dropzone').style.borderColor = 'var(--gold)';
+  content.innerHTML = layoutFilesData.map((f, i) => {
+    const isImg = f.type.startsWith('image/');
+    return `<div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;min-width:200px;max-width:280px">
+      ${isImg
+        ? `<img src="${f.data}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;flex-shrink:0">`
+        : `<div style="font-size:24px;flex-shrink:0">📄</div>`}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${f.type === 'application/pdf' ? 'PDF' : 'Imagem'} — ${(f.size/1024).toFixed(0)} KB</div>
+      </div>
+      <button onclick="removerAnexo(${i})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;padding:0 4px;flex-shrink:0" title="Remover">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function removerAnexo(i) {
+  layoutFilesData.splice(i, 1);
+  renderLayoutPreviews();
+}
+
 function removerLayout() {
-  layoutFileData = null;
-  document.getElementById('layout-preview').style.display = 'none';
-  document.getElementById('layout-preview-content').innerHTML = '';
+  layoutFilesData = [];
+  renderLayoutPreviews();
   document.getElementById('f-layout-input').value = '';
-  document.getElementById('layout-dropzone').style.borderColor = 'var(--border)';
 }
 
 // Drag and drop no dropzone
@@ -1456,7 +1466,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const dz = document.getElementById('layout-dropzone');
   if (!dz) return;
   dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor = 'var(--gold)'; });
-  dz.addEventListener('dragleave', () => { if (!layoutFileData) dz.style.borderColor = 'var(--border)'; });
+  dz.addEventListener('dragleave', () => { if (layoutFilesData.length === 0) dz.style.borderColor = 'var(--border)'; });
   dz.addEventListener('drop', e => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
@@ -1473,6 +1483,14 @@ document.addEventListener('DOMContentLoaded', () => {
 function toggleSection(head) {
   head.classList.toggle('collapsed');
   head.nextElementSibling.classList.toggle('hidden');
+}
+
+function tituloOS(e) {
+  const nome = e.nome_evento || '—';
+  const data = e.data_inicio
+    ? new Date(e.data_inicio + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+    : null;
+  return data ? `O.S. Evento "${nome}" dia ${data}` : `O.S. Evento "${nome}"`;
 }
 
 function tryParse(val, fallback) {
