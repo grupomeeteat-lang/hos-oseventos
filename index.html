@@ -834,6 +834,18 @@
 const SUPABASE_URL = "https://rpavxnjchfmeiacnumpk.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwYXZ4bmpjaGZtZWlhY251bXBrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0Nzg2MjcsImV4cCI6MjA5MDA1NDYyN30.50z2VN6zogv-HWXJHTVXSzAw-xP9mJfodip-iYEhmlA";
 
+function sbError(data, text) {
+  if (!data || (Array.isArray(data) && data.length === 0)) return text || 'Erro desconhecido';
+  if (typeof data === 'string') return data;
+  const msg = data.message;
+  if (msg && typeof msg === 'string') return msg;
+  if (data.error_description && typeof data.error_description === 'string') return data.error_description;
+  if (data.error && typeof data.error === 'string') return data.error;
+  if (data.hint && typeof data.hint === 'string') return data.hint;
+  if (data.details && typeof data.details === 'string') return data.details;
+  try { return JSON.stringify(data); } catch { return text || 'Erro desconhecido'; }
+}
+
 const sb = {
   async from(table) { return new SBQuery(table); }
 };
@@ -870,7 +882,7 @@ class SBQuery {
     const text = await resp.text();
     let data;
     try { data = JSON.parse(text); } catch { data = []; }
-    if (!resp.ok) return { data: null, error: data.message || text };
+    if (!resp.ok) return { data: null, error: sbError(data, text) };
     return { data: Array.isArray(data) ? data : [data], error: null };
   }
 
@@ -886,7 +898,7 @@ class SBQuery {
     const resp = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
     const text = await resp.text();
     let data; try { data = JSON.parse(text); } catch { data = []; }
-    if (!resp.ok) return { data: null, error: data.message || text };
+    if (!resp.ok) return { data: null, error: sbError(data, text) };
     return { data: Array.isArray(data) ? data : [data], error: null };
   }
   async update(body) {
@@ -902,7 +914,7 @@ class SBQuery {
     const resp = await fetch(url, { method: 'PATCH', headers, body: JSON.stringify(body) });
     const text = await resp.text();
     let data; try { data = JSON.parse(text); } catch { data = []; }
-    if (!resp.ok) return { data: null, error: data.message || text };
+    if (!resp.ok) return { data: null, error: sbError(data, text) };
     return { data: Array.isArray(data) ? data : [data], error: null };
   }
   async delete() { return this._fetch('DELETE'); }
