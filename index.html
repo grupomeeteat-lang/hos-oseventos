@@ -224,6 +224,10 @@
     .sidebar { position: fixed; z-index: 100; transform: translateX(-100%); }
     .main { padding: 20px; }
   }
+  @media print {
+    .section-head { background: #c8c8c8 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .section-head .section-title { color: #111111 !important; }
+  }
 </style>
 </head>
 <body>
@@ -1308,7 +1312,7 @@ async function verOS(id) {
 
 function viewSection(title, content) {
   return `<div class="section-block" style="margin-bottom:16px">
-    <div style="padding:12px 20px;background:#e8e8e8;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#111111">${title}</div>
+    <div style="padding:12px 20px;background:#c8c8c8;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#111111;print-color-adjust:exact;-webkit-print-color-adjust:exact">${title}</div>
     <div style="padding:16px 20px">${content}</div>
   </div>`;
 }
