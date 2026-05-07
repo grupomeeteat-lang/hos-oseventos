@@ -225,10 +225,13 @@
     .main { padding: 20px; }
   }
   @media print {
+    .sidebar, .page-header, .os-view-actions { display: none !important; }
+    .app-shell { display: block !important; }
+    .main { padding: 0 !important; }
     .section-head { background: #c8c8c8 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
     .section-head .section-title { color: #111111 !important; }
-    .comprovantes-page { page-break-before: always; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-    .comprovantes-page img { max-width: 100% !important; }
+    .comprovantes-page { page-break-before: always; }
+    .comprovantes-page img { max-width: 100% !important; display: block !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   }
 </style>
 </head>
@@ -1326,23 +1329,24 @@ async function verOS(id) {
       ${(() => {
         const comprovantes = tryParse(e.comprovantes_pagamento, []);
         if (!comprovantes.length) return '';
+        window._viewComprovantes = comprovantes;
         return `<div class="comprovantes-page" style="margin-top:20px">
           <div style="padding:12px 20px;background:#c8c8c8;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#111111;print-color-adjust:exact;-webkit-print-color-adjust:exact">
             💳 Comprovantes de Pagamento
           </div>
           <div style="padding:20px;display:flex;flex-direction:column;gap:20px">
-            ${comprovantes.map(f => {
+            ${comprovantes.map((f, ci) => {
               if (f.type && f.type.startsWith('image/')) {
                 return `<div>
                   <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">${f.name}</div>
-                  <img src="${f.data}" style="max-width:100%;border-radius:6px;border:1px solid var(--border)">
+                  <img src="${f.data}" onclick="abrirArquivo(window._viewComprovantes[${ci}].data,window._viewComprovantes[${ci}].type)" style="max-width:100%;border-radius:6px;border:1px solid var(--border);cursor:pointer;print-color-adjust:exact;-webkit-print-color-adjust:exact" title="Clique para ampliar">
                 </div>`;
               } else {
                 return `<div style="padding:20px;background:var(--surface2);border-radius:6px;text-align:center;border:1px solid var(--border)">
                   <div style="font-size:32px;margin-bottom:8px">📄</div>
                   <div style="font-size:14px;font-weight:600">${f.name}</div>
                   <div style="font-size:11px;color:var(--text-muted);margin-top:4px">PDF — ${(f.size/1024).toFixed(0)} KB</div>
-                  <a href="${f.data}" target="_blank" style="display:inline-block;margin-top:10px;font-size:12px;color:var(--gold);text-decoration:none;border:1px solid var(--gold);padding:4px 12px;border-radius:4px">Abrir PDF</a>
+                  <button onclick="abrirArquivo(window._viewComprovantes[${ci}].data,window._viewComprovantes[${ci}].type)" style="display:inline-block;margin-top:10px;font-size:12px;color:var(--gold);background:none;border:1px solid var(--gold);padding:4px 12px;border-radius:4px;cursor:pointer">Abrir PDF</button>
                 </div>`;
               }
             }).join('')}
@@ -1524,6 +1528,17 @@ function removerLayout() {
   document.getElementById('f-layout-input').value = '';
 }
 
+// ── ABRIR ARQUIVO (Blob URL — evita bloqueio de data: URLs no Chrome) ──
+function abrirArquivo(dataUrl, type) {
+  const arr = dataUrl.split(',');
+  const bstr = atob(arr[1]);
+  const u8arr = new Uint8Array(bstr.length);
+  for (let i = 0; i < bstr.length; i++) u8arr[i] = bstr.charCodeAt(i);
+  const blob = new Blob([u8arr], { type });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+}
+
 // ── COMPROVANTE FILE UPLOAD ──
 let comprovanteFilesData = [];
 
@@ -1554,12 +1569,14 @@ function renderComprovantePreviews() {
   content.innerHTML = comprovanteFilesData.map((f, i) => {
     const isImg = f.type.startsWith('image/');
     return `<div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;min-width:200px;max-width:280px">
-      ${isImg
-        ? `<img src="${f.data}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;flex-shrink:0">`
-        : `<div style="font-size:24px;flex-shrink:0">📄</div>`}
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
-        <div style="font-size:11px;color:var(--text-muted)">${f.type === 'application/pdf' ? 'PDF' : 'Imagem'} — ${(f.size/1024).toFixed(0)} KB</div>
+      <div onclick="abrirArquivo(comprovanteFilesData[${i}].data, comprovanteFilesData[${i}].type)" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer" title="Clique para abrir">
+        ${isImg
+          ? `<img src="${f.data}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;flex-shrink:0">`
+          : `<div style="font-size:24px;flex-shrink:0">📄</div>`}
+        <div style="min-width:0">
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${f.type === 'application/pdf' ? 'PDF' : 'Imagem'} — ${(f.size/1024).toFixed(0)} KB</div>
+        </div>
       </div>
       <button onclick="removerComprovante(${i})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;padding:0 4px;flex-shrink:0" title="Remover">✕</button>
     </div>`;
