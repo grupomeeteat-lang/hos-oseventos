@@ -227,6 +227,8 @@
   @media print {
     .section-head { background: #c8c8c8 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
     .section-head .section-title { color: #111111 !important; }
+    .comprovantes-page { page-break-before: always; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .comprovantes-page img { max-width: 100% !important; }
   }
 </style>
 </head>
@@ -561,6 +563,20 @@
                     <option value="concluido">Concluído</option>
                     <option value="cancelado">Cancelado</option>
                   </select>
+                </div>
+              </div>
+              <div class="field" style="margin-top:14px;margin-bottom:14px">
+                <label>Comprovantes de Pagamento</label>
+                <div id="comprovante-dropzone" onclick="document.getElementById('f-comprovante-input').click()"
+                  style="border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s;background:var(--surface2)">
+                  <div style="font-size:24px;margin-bottom:6px">💳</div>
+                  <div style="font-size:13px;color:var(--text-muted)">Clique para anexar comprovante</div>
+                  <div style="font-size:11px;color:var(--text-dim);margin-top:4px">PDF, JPG ou PNG — múltiplos arquivos</div>
+                </div>
+                <input type="file" id="f-comprovante-input" accept=".pdf,.jpg,.jpeg,.png" multiple style="display:none" onchange="handleComprovanteFile(this)">
+                <div id="comprovante-preview" style="margin-top:12px;display:none">
+                  <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:8px">Comprovantes anexados</div>
+                  <div id="comprovante-preview-content" style="display:flex;flex-wrap:wrap;gap:8px"></div>
                 </div>
               </div>
               <div class="field-row col2" style="margin-bottom:14px">
@@ -1198,6 +1214,7 @@ async function salvarOS() {
     campo_livre: document.getElementById('f-campo-livre').value,
     tempos_movimentos: document.getElementById('f-tempos').value,
     layout_anexos: layoutFilesData.length ? JSON.stringify(layoutFilesData) : null,
+    comprovantes_pagamento: comprovanteFilesData.length ? JSON.stringify(comprovanteFilesData) : null,
     criado_por: currentUser.nome,
   };
 
@@ -1305,6 +1322,33 @@ async function verOS(id) {
       ${menuCozinha.filter(r=>r.servico!=='_info').length ? viewSection('🍽️ Menu Cozinha', menuTable(menuCozinha.filter(r=>r.servico!=='_info')) + (cozinhaInfo ? `<div style="margin-top:12px;padding:12px;background:var(--surface2);border-radius:6px;font-size:13px">${cozinhaInfo.descritivo}</div>` : '')) : ''}
 
       ${e.campo_livre ? viewSection('⚠️ Alertas Operacionais', `<div style="padding:12px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:6px;font-size:13px;white-space:pre-line">${e.campo_livre}</div>`) : ''}
+
+      ${(() => {
+        const comprovantes = tryParse(e.comprovantes_pagamento, []);
+        if (!comprovantes.length) return '';
+        return `<div class="comprovantes-page" style="margin-top:20px">
+          <div style="padding:12px 20px;background:#c8c8c8;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#111111;print-color-adjust:exact;-webkit-print-color-adjust:exact">
+            💳 Comprovantes de Pagamento
+          </div>
+          <div style="padding:20px;display:flex;flex-direction:column;gap:20px">
+            ${comprovantes.map(f => {
+              if (f.type && f.type.startsWith('image/')) {
+                return `<div>
+                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">${f.name}</div>
+                  <img src="${f.data}" style="max-width:100%;border-radius:6px;border:1px solid var(--border)">
+                </div>`;
+              } else {
+                return `<div style="padding:20px;background:var(--surface2);border-radius:6px;text-align:center;border:1px solid var(--border)">
+                  <div style="font-size:32px;margin-bottom:8px">📄</div>
+                  <div style="font-size:14px;font-weight:600">${f.name}</div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:4px">PDF — ${(f.size/1024).toFixed(0)} KB</div>
+                  <a href="${f.data}" target="_blank" style="display:inline-block;margin-top:10px;font-size:12px;color:var(--gold);text-decoration:none;border:1px solid var(--gold);padding:4px 12px;border-radius:4px">Abrir PDF</a>
+                </div>`;
+              }
+            }).join('')}
+          </div>
+        </div>`;
+      })()}
     </div>
   `;
   showPage('view-os');
@@ -1378,6 +1422,8 @@ async function editarOS(id) {
   // Anexos
   layoutFilesData = tryParse(e.layout_anexos, []);
   renderLayoutPreviews();
+  comprovanteFilesData = tryParse(e.comprovantes_pagamento, []);
+  renderComprovantePreviews();
 
   // Brigada
   document.getElementById('brigada-body').innerHTML = '';
@@ -1423,6 +1469,7 @@ function resetForm() {
   document.getElementById('menu-cozinha-body').innerHTML = '';
   ['Entradas','Saladas','Principais','Sobremesas','Encerramento de Serviço'].forEach(s => addMenuCozinhaRow({servico:s}));
   removerLayout();
+  removerComprovantes();
 }
 
 // ── LAYOUT FILE UPLOAD ──
@@ -1475,6 +1522,60 @@ function removerLayout() {
   layoutFilesData = [];
   renderLayoutPreviews();
   document.getElementById('f-layout-input').value = '';
+}
+
+// ── COMPROVANTE FILE UPLOAD ──
+let comprovanteFilesData = [];
+
+function handleComprovanteFile(input) {
+  Array.from(input.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      comprovanteFilesData.push({ name: file.name, type: file.type, size: file.size, data: ev.target.result });
+      renderComprovantePreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function renderComprovantePreviews() {
+  const preview = document.getElementById('comprovante-preview');
+  const content = document.getElementById('comprovante-preview-content');
+  if (!preview) return;
+  if (comprovanteFilesData.length === 0) {
+    preview.style.display = 'none';
+    content.innerHTML = '';
+    document.getElementById('comprovante-dropzone').style.borderColor = 'var(--border)';
+    return;
+  }
+  preview.style.display = 'block';
+  document.getElementById('comprovante-dropzone').style.borderColor = 'var(--gold)';
+  content.innerHTML = comprovanteFilesData.map((f, i) => {
+    const isImg = f.type.startsWith('image/');
+    return `<div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;min-width:200px;max-width:280px">
+      ${isImg
+        ? `<img src="${f.data}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;flex-shrink:0">`
+        : `<div style="font-size:24px;flex-shrink:0">📄</div>`}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${f.type === 'application/pdf' ? 'PDF' : 'Imagem'} — ${(f.size/1024).toFixed(0)} KB</div>
+      </div>
+      <button onclick="removerComprovante(${i})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;padding:0 4px;flex-shrink:0" title="Remover">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function removerComprovante(i) {
+  comprovanteFilesData.splice(i, 1);
+  renderComprovantePreviews();
+}
+
+function removerComprovantes() {
+  comprovanteFilesData = [];
+  renderComprovantePreviews();
+  const inp = document.getElementById('f-comprovante-input');
+  if (inp) inp.value = '';
 }
 
 // Drag and drop no dropzone
