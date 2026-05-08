@@ -1070,7 +1070,7 @@ function renderEventosTable(containerId, eventos) {
       <tr>
         <td><strong>${tituloOS(e)}</strong><br><span style="font-size:11px;color:var(--text-muted)">${e.tipo_evento || ''}</span></td>
         <td>${e.casa || '—'}</td>
-        <td>${e.data_inicio ? new Date(e.data_inicio).toLocaleDateString('pt-BR') : '—'}</td>
+        <td>${e.data_inicio ? new Date(e.data_inicio + 'T12:00:00').toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '—'}</td>
         <td>${e.num_convidados || '—'}</td>
         <td>${e.responsavel_operacional || '—'}</td>
         <td><span style="font-size:12px;color:var(--text-muted)">${e.criado_por_nome || '—'}</span></td>
@@ -1273,7 +1273,7 @@ async function verOS(id) {
         </div>
         <div class="os-meta">
           <div class="os-meta-item">Casa: <strong>${e.casa||'—'}</strong></div>
-          <div class="os-meta-item">Data: <strong>${e.data_inicio ? new Date(e.data_inicio).toLocaleDateString('pt-BR') : '—'}</strong></div>
+          <div class="os-meta-item">Data: <strong>${e.data_inicio ? new Date(e.data_inicio + 'T12:00:00').toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '—'}</strong></div>
           <div class="os-meta-item">Horário: <strong>${e.hora_inicio||'—'} → ${e.hora_termino||'—'}</strong></div>
           <div class="os-meta-item">Pax: <strong>${e.num_convidados||'—'}</strong></div>
           <div class="os-meta-item">Tipo: <strong>${e.tipo_evento||'—'}</strong></div>
@@ -1617,7 +1617,7 @@ function toggleSection(head) {
 function tituloOS(e) {
   const nome = e.nome_evento || '—';
   const data = e.data_inicio
-    ? new Date(e.data_inicio + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+    ? new Date(e.data_inicio + 'T12:00:00').toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: '2-digit' })
     : null;
   return data ? `O.S. Evento "${nome}" dia ${data}` : `O.S. Evento "${nome}"`;
 }
@@ -1738,9 +1738,11 @@ function atualizarResumo() {
   const DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   let dataFmt = '—', diaFmt = '—';
   if (dataRaw) {
-    const d = new Date(dataRaw + 'T12:00:00');
-    dataFmt = d.toLocaleDateString('pt-BR');
-    diaFmt = DIAS[d.getDay()];
+    const d = new Date(dataRaw + 'T12:00:00Z');
+    dataFmt = d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    const WEEKDAY_MAP = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+    const wdShort = d.toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo', weekday: 'short' });
+    diaFmt = DIAS[WEEKDAY_MAP[wdShort] ?? d.getDay()];
   }
 
   document.getElementById('resumo-nome').textContent = nome || '—';
