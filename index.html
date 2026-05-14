@@ -1828,7 +1828,7 @@ async function loadUsuarios() {
   </table>`;
 }
 
-async function abrirModalUsuario(id, nome, perfil, casa, email, nivel, authId) {
+function abrirModalUsuario(id, nome, perfil, casa, email, nivel, authId) {
   document.getElementById('modal-usuario-id').value = id || '';
   document.getElementById('modal-usuario-auth-id').value = authId || '';
   document.getElementById('modal-nome').value = nome || '';
@@ -1847,26 +1847,24 @@ async function abrirModalUsuario(id, nome, perfil, casa, email, nivel, authId) {
   const redefBtn  = document.getElementById('btn-redef-senha');
   if (id) {
     redefArea.style.display = 'block';
-    if (authId) {
-      redefBtn.disabled = false;
-      redefBtn.title = '';
-      // Busca email do Supabase Auth
-      const emailEl = document.getElementById('modal-email');
-      emailEl.placeholder = 'Carregando…';
-      emailEl.disabled = true;
-      const { data } = await sbAdmin('GET', `/auth/v1/admin/users/${authId}`);
-      emailEl.disabled = false;
-      emailEl.placeholder = '';
-      if (data && data.email) emailEl.value = data.email;
-    } else {
-      redefBtn.disabled = true;
-      redefBtn.title = 'Usuário sem autenticação cadastrada';
-    }
+    redefBtn.disabled = !authId;
+    redefBtn.title = authId ? '' : 'Usuário sem autenticação cadastrada';
   } else {
     redefArea.style.display = 'none';
   }
 
+  // Mostra o modal imediatamente — sem await
   document.getElementById('modal-usuario').style.display = 'flex';
+
+  // Busca email do Auth em background (não bloqueia abertura do modal)
+  if (id && authId) {
+    const emailEl = document.getElementById('modal-email');
+    emailEl.placeholder = 'Carregando…';
+    sbAdmin('GET', `/auth/v1/admin/users/${authId}`).then(({ data }) => {
+      emailEl.placeholder = '';
+      if (data && data.email) emailEl.value = data.email;
+    }).catch(() => { emailEl.placeholder = ''; });
+  }
 }
 
 function fecharModalUsuario() {
