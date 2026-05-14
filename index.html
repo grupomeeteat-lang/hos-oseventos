@@ -456,7 +456,22 @@
             </select>
           </div>
           <div id="modal-redef-area" style="display:none;padding-top:16px;border-top:1px solid var(--border);margin-top:16px">
-            <button id="btn-redef-senha" class="btn btn-outline" style="width:100%" onclick="abrirRedefSenhaDoModal()">🔑 Redefinir Senha</button>
+            <button id="btn-redef-senha" class="btn btn-outline" style="width:100%" onclick="toggleRedefSenha()">🔑 Redefinir Senha</button>
+            <div id="modal-redef-fields" style="display:none;margin-top:14px">
+              <div id="modal-redef-alert" style="display:none;margin-bottom:12px"></div>
+              <div class="field">
+                <label>Nova Senha</label>
+                <input type="password" id="modal-redef-nova" placeholder="Mínimo 6 caracteres">
+              </div>
+              <div class="field">
+                <label>Confirmar Nova Senha</label>
+                <input type="password" id="modal-redef-confirma" placeholder="Repita a nova senha">
+              </div>
+              <div style="display:flex;gap:8px;margin-top:4px">
+                <button class="btn btn-ghost" style="flex:1;font-size:13px" onclick="toggleRedefSenha()">Cancelar</button>
+                <button class="btn btn-gold" style="flex:1;font-size:13px" onclick="salvarRedefSenha()">Salvar Senha</button>
+              </div>
+            </div>
           </div>
           <div style="display:flex;gap:10px;margin-top:16px">
             <button class="btn btn-ghost" style="flex:1" onclick="fecharModalUsuario()">Cancelar</button>
@@ -1813,7 +1828,7 @@ async function loadUsuarios() {
   </table>`;
 }
 
-function abrirModalUsuario(id, nome, perfil, casa, email, nivel, authId) {
+async function abrirModalUsuario(id, nome, perfil, casa, email, nivel, authId) {
   document.getElementById('modal-usuario-id').value = id || '';
   document.getElementById('modal-usuario-auth-id').value = authId || '';
   document.getElementById('modal-nome').value = nome || '';
@@ -1825,6 +1840,8 @@ function abrirModalUsuario(id, nome, perfil, casa, email, nivel, authId) {
   document.getElementById('modal-usuario-title').textContent = id ? 'Editar Usuário' : 'Novo Usuário';
   document.getElementById('modal-senha-field').style.display = id ? 'none' : 'block';
   document.getElementById('modal-alert').style.display = 'none';
+  document.getElementById('modal-redef-fields').style.display = 'none';
+  document.getElementById('modal-redef-alert').style.display = 'none';
 
   const redefArea = document.getElementById('modal-redef-area');
   const redefBtn  = document.getElementById('btn-redef-senha');
@@ -1833,6 +1850,14 @@ function abrirModalUsuario(id, nome, perfil, casa, email, nivel, authId) {
     if (authId) {
       redefBtn.disabled = false;
       redefBtn.title = '';
+      // Busca email do Supabase Auth
+      const emailEl = document.getElementById('modal-email');
+      emailEl.placeholder = 'Carregando…';
+      emailEl.disabled = true;
+      const { data } = await sbAdmin('GET', `/auth/v1/admin/users/${authId}`);
+      emailEl.disabled = false;
+      emailEl.placeholder = '';
+      if (data && data.email) emailEl.value = data.email;
     } else {
       redefBtn.disabled = true;
       redefBtn.title = 'Usuário sem autenticação cadastrada';
@@ -1928,10 +1953,32 @@ function abrirModalResetSenha(authId, nome) {
   document.getElementById('modal-reset-senha').style.display = 'flex';
 }
 
-function abrirRedefSenhaDoModal() {
-  const authId = document.getElementById('modal-usuario-auth-id').value;
-  const nome   = document.getElementById('modal-nome').value;
-  abrirModalResetSenha(authId, nome);
+function toggleRedefSenha() {
+  const fields = document.getElementById('modal-redef-fields');
+  const open = fields.style.display !== 'none';
+  if (open) {
+    fields.style.display = 'none';
+  } else {
+    document.getElementById('modal-redef-nova').value = '';
+    document.getElementById('modal-redef-confirma').value = '';
+    document.getElementById('modal-redef-alert').style.display = 'none';
+    fields.style.display = 'block';
+  }
+}
+
+async function salvarRedefSenha() {
+  const authId   = document.getElementById('modal-usuario-auth-id').value;
+  const nova     = document.getElementById('modal-redef-nova').value;
+  const confirma = document.getElementById('modal-redef-confirma').value;
+  const alertEl  = document.getElementById('modal-redef-alert');
+  const show = (msg, type) => { alertEl.style.display='block'; alertEl.className='alert alert-'+type; alertEl.textContent=msg; };
+  if (!nova || nova.length < 6) { show('Mínimo 6 caracteres.', 'error'); return; }
+  if (nova !== confirma) { show('As senhas não coincidem.', 'error'); return; }
+  show('Salvando…', 'success');
+  const { error } = await sbAdmin('PUT', `/auth/v1/admin/users/${authId}`, { password: nova });
+  if (error) { show('Erro: ' + error, 'error'); return; }
+  show('Senha redefinida com sucesso!', 'success');
+  setTimeout(() => { document.getElementById('modal-redef-fields').style.display = 'none'; }, 1500);
 }
 
 async function confirmarResetSenha() {
