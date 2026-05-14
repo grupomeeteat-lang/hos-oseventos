@@ -1043,6 +1043,15 @@ async function loadEventos() {
   aplicarFiltros();
 }
 
+async function excluirOS(id, nome) {
+  if (!confirm(`Tem certeza que deseja excluir o evento "${nome}"? Esta ação não pode ser desfeita.`)) return;
+  const q = new SBQuery('eventos');
+  q.eq('id', id);
+  const { error } = await q.delete();
+  if (error) { alert('Erro ao excluir: ' + sbError(error, 'Erro desconhecido')); return; }
+  loadEventos();
+}
+
 function aplicarFiltros() {
   const casa = document.getElementById('filtro-casa')?.value || '';
   const status = document.getElementById('filtro-status')?.value || '';
@@ -1077,8 +1086,9 @@ function renderEventosTable(containerId, eventos) {
         <td><span style="font-size:12px;color:var(--text-muted)">${e.criado_por_nome || '—'}</span></td>
         <td><span class="badge badge-${e.status || 'rascunho'}">${e.status || 'rascunho'}</span></td>
         <td style="white-space:nowrap">
-          <button class="btn btn-ghost btn-sm" onclick="verOS(${e.id})">Ver</button>
-          <button class="btn btn-outline btn-sm" onclick="editarOS(${e.id})">Editar</button>
+          <button class="btn btn-ghost btn-sm" onclick="verOS('${e.id}')">Ver</button>
+          <button class="btn btn-outline btn-sm" onclick="editarOS('${e.id}')">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="excluirOS('${e.id}', '${(e.nome_evento||'').replace(/'/g,"\\'")}')">🗑️</button>
         </td>
       </tr>
     `).join('')}</tbody>
