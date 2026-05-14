@@ -1771,7 +1771,7 @@ function tryParse(val, fallback) {
 async function loadUsuarios() {
   document.getElementById('usuarios-table-body').innerHTML = '<div class="loading"><div class="spinner"></div> Carregando...</div>';
   const q = new SBQuery('usuarios');
-  q.order('nome', {ascending: true});
+  q.select('id,nome,email,perfil,nivel_acesso,casa,auth_id').order('nome', {ascending: true});
   const { data, error } = await q.get();
   if (error || !data) {
     document.getElementById('usuarios-table-body').innerHTML = `<div class="loading">Erro: ${error}</div>`;
