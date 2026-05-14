@@ -19,7 +19,7 @@
 - **Vercel** serve o `index.html` como site estático.
 
 ### Cliente Supabase customizado (`SBQuery`)
-Substitui o SDK oficial do Supabase. Localizado em torno da linha 1560.
+Substitui o SDK oficial do Supabase. Definido na linha **1553**.
 
 ```js
 const q = new SBQuery('nome_da_tabela');
@@ -62,28 +62,42 @@ Principal tabela do sistema. Cada linha = uma O.S.
 |--------|------|-----------|
 | `id` | int8 (PK, auto) | ID da O.S. |
 | `created_at` | timestamptz | Criação automática |
-| `nome_evento` | text | Nome do evento |
-| `data_inicio` | date | Data do evento (formato YYYY-MM-DD) |
-| `horario_inicio` | text | Horário de início (ex: "19:00") |
-| `horario_fim` | text | Horário de fim |
-| `local_evento` | text | Local/endereço |
-| `tipo_evento` | text | Tipo (ex: "Casamento", "Corporativo") |
-| `status_os` | text | Status atual da O.S. |
-| `num_convidados` | int4 | Número de convidados |
-| `cliente_nome` | text | Nome do cliente/contratante |
-| `cliente_telefone` | text | Telefone do cliente |
-| `cliente_email` | text | Email do cliente |
+| `updated_at` | timestamptz | Última atualização (preenchida no update) |
+| `criado_por` | text | Nome do usuário que criou a O.S. |
 | `casa` | text | Unidade ("MEET & EAT" ou "Madonna Cucina") |
-| `responsavel` | text | Responsável interno pelo evento |
-| `espaco` | text | Espaço dentro do local |
-| `observacoes` | text | Observações gerais |
+| `tipo_evento` | text | Tipo (ex: "Casamento", "Corporativo") |
+| `nome_evento` | text | Nome do evento |
+| `tema` | text | Tema do evento |
+| `data_inicio` | date | Data do evento (formato YYYY-MM-DD) |
+| `hora_inicio` | text | Horário de início (ex: "19:00") |
+| `hora_termino` | text | Horário de término |
+| `num_convidados` | int4 | Número de convidados (PAX) |
+| `contato` | text | Contato do cliente/contratante |
+| `situacao_pagamento` | text | Situação do pagamento |
+| `responsavel_comercial` | text | Responsável comercial pelo evento |
+| `responsavel_operacional` | text | Responsável operacional pelo evento |
+| `status` | text | Status atual da O.S. |
+| `briefing_cliente` | text | Briefing / observações do cliente |
+| `espacos` | text | Espaços do local (sem acento, sem ç) |
+| `acesso_entrada` | text | Tipo de acesso/entrada |
+| `acesso_obs` | text | Observações sobre acesso |
+| `mobiliario` | text | Mobiliário necessário |
+| `mobiliario_obs` | text | Observações sobre mobiliário |
+| `fotografia` | text | Fotografia/vídeo |
+| `valet` | text | Valet |
+| `artistico` | text | Artístico/entretenimento |
+| `gerador` | text | Gerador de energia |
+| `ambulancia` | text | Ambulância/suporte médico |
+| `menores` | text | Presença de menores de idade |
+| `montagem` | text | Montagem/desmontagem |
+| `montagem_descricao` | text | Descrição da montagem |
 | `brigada` | jsonb | Array de membros da brigada `[{nome, funcao, horario}]` |
 | `menu_bar` | jsonb | Array de itens do bar `[{item, categoria, servico, qtd}]` |
 | `menu_cozinha` | jsonb | Array de itens da cozinha `[{item, categoria, servico, qtd}]` |
-| `layout_info` | text | Descrição textual do layout |
+| `campo_livre` | text | Campo de texto livre / observações gerais |
+| `tempos_movimentos` | text | Tempos e movimentos do evento |
 | `layout_anexos` | text | Anexos de layout em base64 (JSON array) — **adicionado via ALTER TABLE** |
 | `comprovantes_pagamento` | text | Comprovantes em base64 (JSON array) — **adicionado via ALTER TABLE** |
-| `espaços` | text | Campo de espaços adicionais |
 
 **RLS:** Desabilitado (`ALTER TABLE eventos DISABLE ROW LEVEL SECURITY`)
 
@@ -140,6 +154,20 @@ FOR DELETE USING (auth.uid() IS NOT NULL);
 - `SBQuery._headers()` chama `getAuthToken()` dinamicamente em cada request
 - Chamadas admin usam `SUPABASE_SERVICE_KEY` diretamente (bypass de RLS)
 
+### Estrutura de `currentUser`
+```js
+currentUser = {
+  id: p.id,              // PK da tabela usuarios
+  auth_id: authId,       // UUID do Supabase Auth
+  token: access_token,   // JWT para requests autenticados
+  nome: p.nome,
+  email: p.email,
+  perfil: p.perfil,      // 'operacional' | 'comercial' | 'admin'
+  nivel_acesso: p.nivel_acesso,  // 'operacional' | 'comercial' | 'admin' | 'master'
+  casa: p.casa           // 'MEET & EAT' | 'Madonna Cucina' | 'Todas'
+}
+```
+
 ### Localização das keys no código (`index.html`)
 
 | Constante | Linha | Descrição |
@@ -177,9 +205,9 @@ FOR DELETE USING (auth.uid() IS NOT NULL);
 
 | ID da página | Nav | Descrição | Funções JS principais |
 |-------------|-----|-----------|----------------------|
-| `page-dashboard` | Dashboard | Cards de resumo: total de eventos, próximos eventos | `loadDashboard()`, `atualizarResumo()` |
+| `page-dashboard` | Dashboard | Cards de resumo: total de eventos, próximos eventos | `loadDashboard()` |
 | `page-eventos` | Eventos | Tabela de todas as O.S. com filtros por casa e status; botões Ver, Editar, Excluir | `loadEventos()`, `aplicarFiltros()`, `renderEventosTable()`, `excluirOS()` |
-| `page-nova-os` | Nova O.S. | Formulário completo de criação/edição de O.S. | `salvarOS()`, `editarOS()`, `resetForm()`, `addBrigadaRow()`, `addMenuBarRow()`, `addMenuCozinhaRow()`, `handleLayoutFile()`, `handleComprovanteFile()` |
+| `page-nova-os` | Nova O.S. | Formulário completo de criação/edição de O.S.; inclui widget de resumo lateral | `salvarOS()`, `editarOS()`, `resetForm()`, `atualizarResumo()`, `addBrigadaRow()`, `addMenuBarRow()`, `addMenuCozinhaRow()`, `handleLayoutFile()`, `handleComprovanteFile()` |
 | `page-view-os` | — | Visualização de uma O.S. para leitura e impressão | `verOS()`, `salvarStatusView()`, `abrirArquivo()`, `viewSection()` |
 | `page-usuarios` | Usuários | Painel admin de gerenciamento de usuários | `loadUsuarios()`, `abrirModalUsuario()`, `salvarUsuario()`, `excluirUsuario()`, `toggleRedefSenha()`, `salvarRedefSenha()` |
 | `page-senha` | Minha Senha | Formulário para o usuário logado trocar sua própria senha | `trocarSenha()` |
@@ -254,8 +282,13 @@ Qualquer tela → Minha Senha
 ### Adicionar nova tela
 1. Adicionar `<div id="page-nova-tela" style="display:none">` no HTML (entre as outras páginas)
 2. Adicionar item no nav: `<div class="nav-item" id="nav-nova-tela" onclick="showPage('nova-tela')">Nome</div>`
-3. Em `setupUI()` (~linha 1707): controlar visibilidade do nav-item por nível de acesso
-4. Em `showPage()` (~linha 1725): não precisa alterar — a função esconde todos os `page-*` e mostra o certo
+3. Em `setupUI()` (linha 1707): controlar visibilidade do nav-item por nível de acesso
+4. Em `showPage()` (linha 1725): **obrigatório** adicionar `'nova-tela'` ao array hardcoded na linha 1726:
+   ```js
+   ['dashboard', 'eventos', 'nova-os', 'view-os', 'usuarios', 'senha', 'nova-tela'].forEach(...)
+   ```
+   E adicionar `'nav-nova-tela'` ao array de nav na linha 1730.
+   A função **não** usa `querySelectorAll` — a lista de páginas é explícita.
 
 ### Query no Supabase (SBQuery)
 ```js
