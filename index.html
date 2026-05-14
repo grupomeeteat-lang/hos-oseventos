@@ -415,6 +415,7 @@
           <div style="font-family:'Playfair Display',serif;font-size:20px;margin-bottom:24px" id="modal-usuario-title">Novo Usuário</div>
           <div id="modal-alert" style="display:none;margin-bottom:16px"></div>
           <input type="hidden" id="modal-usuario-id">
+          <input type="hidden" id="modal-usuario-auth-id">
           <div class="field">
             <label>Nome</label>
             <input type="text" id="modal-nome" placeholder="Nome do usuário">
@@ -454,7 +455,10 @@
               <option>Todas</option>
             </select>
           </div>
-          <div style="display:flex;gap:10px;margin-top:8px">
+          <div id="modal-redef-area" style="display:none;padding-top:16px;border-top:1px solid var(--border);margin-top:16px">
+            <button id="btn-redef-senha" class="btn btn-outline" style="width:100%" onclick="abrirRedefSenhaDoModal()">🔑 Redefinir Senha</button>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:16px">
             <button class="btn btn-ghost" style="flex:1" onclick="fecharModalUsuario()">Cancelar</button>
             <button class="btn btn-gold" style="flex:1" onclick="salvarUsuario()">Salvar</button>
           </div>
@@ -472,9 +476,13 @@
             <label>Nova Senha</label>
             <input type="password" id="modal-reset-nova" placeholder="Mínimo 6 caracteres">
           </div>
+          <div class="field">
+            <label>Confirmar Nova Senha</label>
+            <input type="password" id="modal-reset-confirma" placeholder="Repita a nova senha">
+          </div>
           <div style="display:flex;gap:10px;margin-top:8px">
             <button class="btn btn-ghost" style="flex:1" onclick="document.getElementById('modal-reset-senha').style.display='none'">Cancelar</button>
-            <button class="btn btn-gold" style="flex:1" onclick="confirmarResetSenha()">Resetar</button>
+            <button class="btn btn-gold" style="flex:1" onclick="confirmarResetSenha()">Salvar Senha</button>
           </div>
         </div>
       </div>
@@ -1796,7 +1804,7 @@ async function loadUsuarios() {
         <td><span class="badge ${nivelBadge}">${u.nivel_acesso||'—'}</span></td>
         <td>${u.casa||'—'}</td>
         <td style="white-space:nowrap">
-          <button class="btn btn-outline btn-sm" onclick="abrirModalUsuario('${u.id}','${nomeEsc}','${u.perfil||''}','${u.casa||''}','${u.email||''}','${u.nivel_acesso||''}')">Editar</button>
+          <button class="btn btn-outline btn-sm" onclick="abrirModalUsuario('${u.id}','${nomeEsc}','${u.perfil||''}','${u.casa||''}','${u.email||''}','${u.nivel_acesso||''}','${u.auth_id||''}')">Editar</button>
           ${u.auth_id ? `<button class="btn btn-ghost btn-sm" onclick="abrirModalResetSenha('${u.auth_id}','${nomeEsc}')">🔑</button>` : ''}
           ${podeExcluirEste ? `<button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}','${nomeEsc}','${u.auth_id||''}')">🗑️</button>` : ''}
         </td>
@@ -1805,8 +1813,9 @@ async function loadUsuarios() {
   </table>`;
 }
 
-function abrirModalUsuario(id, nome, perfil, casa, email, nivel) {
+function abrirModalUsuario(id, nome, perfil, casa, email, nivel, authId) {
   document.getElementById('modal-usuario-id').value = id || '';
+  document.getElementById('modal-usuario-auth-id').value = authId || '';
   document.getElementById('modal-nome').value = nome || '';
   document.getElementById('modal-email').value = email || '';
   document.getElementById('modal-senha-inicial').value = '';
@@ -1816,6 +1825,22 @@ function abrirModalUsuario(id, nome, perfil, casa, email, nivel) {
   document.getElementById('modal-usuario-title').textContent = id ? 'Editar Usuário' : 'Novo Usuário';
   document.getElementById('modal-senha-field').style.display = id ? 'none' : 'block';
   document.getElementById('modal-alert').style.display = 'none';
+
+  const redefArea = document.getElementById('modal-redef-area');
+  const redefBtn  = document.getElementById('btn-redef-senha');
+  if (id) {
+    redefArea.style.display = 'block';
+    if (authId) {
+      redefBtn.disabled = false;
+      redefBtn.title = '';
+    } else {
+      redefBtn.disabled = true;
+      redefBtn.title = 'Usuário sem autenticação cadastrada';
+    }
+  } else {
+    redefArea.style.display = 'none';
+  }
+
   document.getElementById('modal-usuario').style.display = 'flex';
 }
 
@@ -1898,20 +1923,29 @@ function abrirModalResetSenha(authId, nome) {
   document.getElementById('modal-reset-auth-id').value = authId;
   document.getElementById('modal-reset-nome').textContent = 'Usuário: ' + nome;
   document.getElementById('modal-reset-nova').value = '';
+  document.getElementById('modal-reset-confirma').value = '';
   document.getElementById('modal-reset-alert').style.display = 'none';
   document.getElementById('modal-reset-senha').style.display = 'flex';
 }
 
+function abrirRedefSenhaDoModal() {
+  const authId = document.getElementById('modal-usuario-auth-id').value;
+  const nome   = document.getElementById('modal-nome').value;
+  abrirModalResetSenha(authId, nome);
+}
+
 async function confirmarResetSenha() {
-  const authId = document.getElementById('modal-reset-auth-id').value;
-  const nova   = document.getElementById('modal-reset-nova').value;
-  const alertEl = document.getElementById('modal-reset-alert');
+  const authId   = document.getElementById('modal-reset-auth-id').value;
+  const nova     = document.getElementById('modal-reset-nova').value;
+  const confirma = document.getElementById('modal-reset-confirma').value;
+  const alertEl  = document.getElementById('modal-reset-alert');
   const show = (msg, type) => { alertEl.style.display='block'; alertEl.className='alert alert-'+type; alertEl.textContent=msg; };
   if (!nova || nova.length < 6) { show('Mínimo 6 caracteres.', 'error'); return; }
+  if (nova !== confirma) { show('As senhas não coincidem.', 'error'); return; }
   show('Atualizando...', 'success');
   const { error } = await sbAdmin('PUT', `/auth/v1/admin/users/${authId}`, { password: nova });
   if (error) { show('Erro: ' + error, 'error'); return; }
-  show('Senha resetada com sucesso!', 'success');
+  show('Senha redefinida com sucesso!', 'success');
   setTimeout(() => { document.getElementById('modal-reset-senha').style.display='none'; }, 1500);
 }
 
