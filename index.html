@@ -245,18 +245,16 @@
       <div class="brand">GRUPO HOS</div>
       <div class="sub">Gestão de Eventos</div>
     </div>
+    <div id="login-error" style="display:none;background:rgba(220,53,69,0.12);border:1px solid rgba(220,53,69,0.35);border-radius:6px;padding:12px;color:#f08080;font-size:13px;margin-bottom:16px"></div>
     <div class="field">
-      <label>Quem é você?</label>
-      <div id="user-buttons" style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
-        <button class="btn btn-ghost btn-full" onclick="entrarComo('Henrique', 'admin')">Henrique</button>
-        <button class="btn btn-ghost btn-full" onclick="entrarComo('Alexandre', 'operacional')">Alexandre</button>
-        <button class="btn btn-ghost btn-full" onclick="entrarComo('Jailson', 'operacional')">Jailson</button>
-        <button class="btn btn-ghost btn-full" onclick="entrarComo('Karine', 'operacional')">Karine</button>
-        <button class="btn btn-ghost btn-full" onclick="entrarComo('Victoria', 'operacional')">Victoria</button>
-        <button class="btn btn-ghost btn-full" onclick="entrarComo('Arthur', 'operacional')">Arthur</button>
-        <button class="btn btn-ghost btn-full" onclick="entrarComo('Convidado', 'operacional')">Convidado</button>
-      </div>
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')fazerLogin()" style="width:100%;box-sizing:border-box">
     </div>
+    <div class="field">
+      <label>Senha</label>
+      <input type="password" id="login-senha" placeholder="••••••••" onkeydown="if(event.key==='Enter')fazerLogin()" style="width:100%;box-sizing:border-box">
+    </div>
+    <button class="btn btn-gold btn-full" id="btn-entrar" onclick="fazerLogin()">Entrar</button>
   </div>
 </div>
 
@@ -413,7 +411,7 @@
 
       <!-- MODAL NOVO/EDITAR USUÁRIO -->
       <div id="modal-usuario" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center">
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;width:420px;max-width:95vw">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;width:460px;max-width:95vw;max-height:90vh;overflow-y:auto">
           <div style="font-family:'Playfair Display',serif;font-size:20px;margin-bottom:24px" id="modal-usuario-title">Novo Usuário</div>
           <div id="modal-alert" style="display:none;margin-bottom:16px"></div>
           <input type="hidden" id="modal-usuario-id">
@@ -422,12 +420,31 @@
             <input type="text" id="modal-nome" placeholder="Nome do usuário">
           </div>
           <div class="field">
-            <label>Perfil</label>
-            <select id="modal-perfil">
-              <option value="operacional">Operacional</option>
-              <option value="comercial">Comercial</option>
-              <option value="admin">Admin</option>
-            </select>
+            <label>Email</label>
+            <input type="email" id="modal-email" placeholder="usuario@email.com">
+          </div>
+          <div class="field" id="modal-senha-field">
+            <label>Senha Inicial</label>
+            <input type="password" id="modal-senha-inicial" placeholder="Mínimo 6 caracteres">
+          </div>
+          <div class="field-row col2">
+            <div class="field">
+              <label>Perfil</label>
+              <select id="modal-perfil">
+                <option value="operacional">Operacional</option>
+                <option value="comercial">Comercial</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Nível de Acesso</label>
+              <select id="modal-nivel">
+                <option value="operacional">Operacional</option>
+                <option value="comercial">Comercial</option>
+                <option value="admin">Admin</option>
+                <option value="master">Master</option>
+              </select>
+            </div>
           </div>
           <div class="field">
             <label>Casa Principal</label>
@@ -440,6 +457,24 @@
           <div style="display:flex;gap:10px;margin-top:8px">
             <button class="btn btn-ghost" style="flex:1" onclick="fecharModalUsuario()">Cancelar</button>
             <button class="btn btn-gold" style="flex:1" onclick="salvarUsuario()">Salvar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL RESETAR SENHA -->
+      <div id="modal-reset-senha" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:201;align-items:center;justify-content:center">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;width:380px;max-width:95vw">
+          <div style="font-family:'Playfair Display',serif;font-size:20px;margin-bottom:8px">Resetar Senha</div>
+          <div id="modal-reset-nome" style="font-size:13px;color:var(--text-muted);margin-bottom:20px"></div>
+          <div id="modal-reset-alert" style="display:none;margin-bottom:16px"></div>
+          <input type="hidden" id="modal-reset-auth-id">
+          <div class="field">
+            <label>Nova Senha</label>
+            <input type="password" id="modal-reset-nova" placeholder="Mínimo 6 caracteres">
+          </div>
+          <div style="display:flex;gap:10px;margin-top:8px">
+            <button class="btn btn-ghost" style="flex:1" onclick="document.getElementById('modal-reset-senha').style.display='none'">Cancelar</button>
+            <button class="btn btn-gold" style="flex:1" onclick="confirmarResetSenha()">Resetar</button>
           </div>
         </div>
       </div>
@@ -857,6 +892,28 @@
 // ══════════════════════════════════════════════════════════════════════
 const SUPABASE_URL = "https://rpavxnjchfmeiacnumpk.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwYXZ4bmpjaGZtZWlhY251bXBrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0Nzg2MjcsImV4cCI6MjA5MDA1NDYyN30.50z2VN6zogv-HWXJHTVXSzAw-xP9mJfodip-iYEhmlA";
+// Service role key — obtida em Supabase Dashboard → Settings → API → service_role
+const SUPABASE_SERVICE_KEY = "COLE_AQUI_SUA_SERVICE_ROLE_KEY";
+
+function getAuthToken() {
+  return currentUser?.token || SUPABASE_KEY;
+}
+
+async function sbAdmin(method, path, body) {
+  const resp = await fetch(`${SUPABASE_URL}${path}`, {
+    method,
+    headers: {
+      'apikey': SUPABASE_SERVICE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const text = await resp.text();
+  let data; try { data = JSON.parse(text); } catch { data = {}; }
+  if (!resp.ok) return { data: null, error: sbError(data, text) };
+  return { data, error: null };
+}
 
 function sbError(data, text) {
   if (!data || (Array.isArray(data) && data.length === 0)) return text || 'Erro desconhecido';
@@ -887,6 +944,15 @@ class SBQuery {
   order(col, opts={}) { this._order = `${col}.${opts.ascending===false?'desc':'asc'}`; return this; }
   limit(n) { this._limit = n; return this; }
 
+  _headers() {
+    return {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + getAuthToken(),
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    };
+  }
+
   async _fetch(method, body) {
     let url = `${SUPABASE_URL}/rest/v1/${this.table}`;
     const params = [`select=${encodeURIComponent(this._select)}`];
@@ -895,17 +961,10 @@ class SBQuery {
     if (this._limit) params.push(`limit=${this._limit}`);
     if (method === 'GET' || method === 'DELETE') url += '?' + params.join('&');
 
-    const headers = {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation'
-    };
-
-    const resp = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    const resp = await fetch(url, { method, headers: this._headers(), body: body ? JSON.stringify(body) : undefined });
+    if (resp.status === 401) { doLogout(); return { data: null, error: 'Sessão expirada. Faça login novamente.' }; }
     const text = await resp.text();
-    let data;
-    try { data = JSON.parse(text); } catch { data = []; }
+    let data; try { data = JSON.parse(text); } catch { data = []; }
     if (!resp.ok) return { data: null, error: sbError(data, text) };
     return { data: Array.isArray(data) ? data : [data], error: null };
   }
@@ -913,13 +972,8 @@ class SBQuery {
   async get() { return this._fetch('GET'); }
   async insert(body) {
     const url = `${SUPABASE_URL}/rest/v1/${this.table}`;
-    const headers = {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation'
-    };
-    const resp = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+    const resp = await fetch(url, { method: 'POST', headers: this._headers(), body: JSON.stringify(body) });
+    if (resp.status === 401) { doLogout(); return { data: null, error: 'Sessão expirada.' }; }
     const text = await resp.text();
     let data; try { data = JSON.parse(text); } catch { data = []; }
     if (!resp.ok) return { data: null, error: sbError(data, text) };
@@ -929,13 +983,8 @@ class SBQuery {
     let url = `${SUPABASE_URL}/rest/v1/${this.table}`;
     const params = this._filters.map(f => f);
     if (params.length) url += '?' + params.join('&');
-    const headers = {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation'
-    };
-    const resp = await fetch(url, { method: 'PATCH', headers, body: JSON.stringify(body) });
+    const resp = await fetch(url, { method: 'PATCH', headers: this._headers(), body: JSON.stringify(body) });
+    if (resp.status === 401) { doLogout(); return { data: null, error: 'Sessão expirada.' }; }
     const text = await resp.text();
     let data; try { data = JSON.parse(text); } catch { data = []; }
     if (!resp.ok) return { data: null, error: sbError(data, text) };
@@ -951,39 +1000,105 @@ let currentViewId = null;
 let editingId = null;
 
 // ══════════════════════════════════════════════════════════════════════
-// AUTH — sem senha, só escolhe o nome
+// AUTH — Supabase Auth real
 // ══════════════════════════════════════════════════════════════════════
-function entrarComo(nome, perfil) {
-  currentUser = { nome, perfil, id: null };
-  document.getElementById('user-name-display').textContent = nome;
-  document.getElementById('user-role-display').textContent = perfil;
-  document.getElementById('user-avatar').textContent = nome.slice(0,2).toUpperCase();
+async function fazerLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const senha = document.getElementById('login-senha').value;
+  const errEl = document.getElementById('login-error');
+  const btnEl = document.getElementById('btn-entrar');
 
-  if (perfil === 'admin') {
-    document.getElementById('nav-usuarios').style.display = 'flex';
+  errEl.style.display = 'none';
+  if (!email || !senha) { errEl.style.display='block'; errEl.textContent='Preencha email e senha.'; return; }
+
+  btnEl.disabled = true; btnEl.textContent = 'Entrando...';
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: senha })
+    });
+    const json = await resp.json();
+    if (!resp.ok) {
+      errEl.style.display = 'block';
+      errEl.textContent = json.error_description || json.message || 'Email ou senha incorretos.';
+      return;
+    }
+    localStorage.setItem('hos_token', json.access_token);
+    localStorage.setItem('hos_refresh', json.refresh_token || '');
+    localStorage.setItem('hos_auth_id', json.user.id);
+    await carregarPerfil(json.user.id, json.access_token);
+  } catch(e) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'Erro de conexão. Tente novamente.';
+  } finally {
+    btnEl.disabled = false; btnEl.textContent = 'Entrar';
   }
+}
 
+async function carregarPerfil(authId, token) {
+  currentUser = { token };
+  const q = new SBQuery('usuarios');
+  q.eq('auth_id', authId);
+  const { data, error } = await q.get();
+  if (error || !data || !data.length) {
+    const errEl = document.getElementById('login-error');
+    if (errEl) { errEl.style.display='block'; errEl.textContent='Perfil não encontrado. Contate o administrador.'; }
+    currentUser = null;
+    return;
+  }
+  const p = data[0];
+  currentUser = {
+    id: p.id, auth_id: authId, token,
+    nome: p.nome, email: p.email,
+    perfil: p.perfil, nivel_acesso: p.nivel_acesso || 'operacional', casa: p.casa
+  };
+  setupUI();
   document.getElementById('screen-login').style.display = 'none';
   document.getElementById('screen-app').style.display = 'block';
   showPage('dashboard');
 }
 
-function doLogout() {
+async function checkSession() {
+  const token = localStorage.getItem('hos_token');
+  const authId = localStorage.getItem('hos_auth_id');
+  if (!token || !authId) return;
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + token }
+    });
+    if (!resp.ok) { localStorage.removeItem('hos_token'); localStorage.removeItem('hos_auth_id'); return; }
+    await carregarPerfil(authId, token);
+  } catch {}
+}
+
+async function doLogout() {
+  const token = currentUser?.token;
   currentUser = null;
+  localStorage.removeItem('hos_token');
+  localStorage.removeItem('hos_refresh');
+  localStorage.removeItem('hos_auth_id');
+  if (token) {
+    try { await fetch(`${SUPABASE_URL}/auth/v1/logout`, { method:'POST', headers:{ 'apikey': SUPABASE_KEY, 'Authorization':'Bearer '+token } }); } catch {}
+  }
   document.getElementById('screen-login').style.display = 'flex';
   document.getElementById('screen-app').style.display = 'none';
 }
 
-function showLoginAlert(msg, type) {
-  // mantido por compatibilidade
+function setupUI() {
+  const nivel = currentUser?.nivel_acesso || 'operacional';
+  const nome  = currentUser?.nome || '—';
+  document.getElementById('user-name-display').textContent = nome;
+  document.getElementById('user-role-display').textContent = nivel;
+  document.getElementById('user-avatar').textContent = nome.slice(0,2).toUpperCase();
+  document.getElementById('nav-usuarios').style.display = ['master','admin'].includes(nivel) ? 'flex' : 'none';
+  document.getElementById('nav-nova-os').style.display  = nivel === 'operacional' ? 'none' : 'flex';
 }
 
-async function sha256(message) {
-  const msgBuffer = new TextEncoder().encode(message);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
+function podeEditar()  { return ['master','admin','comercial'].includes(currentUser?.nivel_acesso); }
+function podeExcluir() { return ['master','admin'].includes(currentUser?.nivel_acesso); }
+
+function showLoginAlert(msg, type) {}
 
 // ══════════════════════════════════════════════════════════════════════
 // NAVEGAÇÃO
@@ -1087,8 +1202,8 @@ function renderEventosTable(containerId, eventos) {
         <td><span class="badge badge-${e.status || 'rascunho'}">${e.status || 'rascunho'}</span></td>
         <td style="white-space:nowrap">
           <button class="btn btn-ghost btn-sm" onclick="verOS('${e.id}')">Ver</button>
-          <button class="btn btn-outline btn-sm" onclick="editarOS('${e.id}')">Editar</button>
-          <button class="btn btn-danger btn-sm" onclick="excluirOS('${e.id}', '${(e.nome_evento||'').replace(/'/g,"\\'")}')">🗑️</button>
+          ${podeEditar() ? `<button class="btn btn-outline btn-sm" onclick="editarOS('${e.id}')">Editar</button>` : ''}
+          ${podeExcluir() ? `<button class="btn btn-danger btn-sm" onclick="excluirOS('${e.id}','${(e.nome_evento||'').replace(/'/g,"\\'")}')">🗑️</button>` : ''}
         </td>
       </tr>
     `).join('')}</tbody>
@@ -1656,7 +1771,7 @@ function tryParse(val, fallback) {
 async function loadUsuarios() {
   document.getElementById('usuarios-table-body').innerHTML = '<div class="loading"><div class="spinner"></div> Carregando...</div>';
   const q = new SBQuery('usuarios');
-  q.order('id', {ascending: true});
+  q.order('nome', {ascending: true});
   const { data, error } = await q.get();
   if (error || !data) {
     document.getElementById('usuarios-table-body').innerHTML = `<div class="loading">Erro: ${error}</div>`;
@@ -1666,26 +1781,40 @@ async function loadUsuarios() {
     document.getElementById('usuarios-table-body').innerHTML = '<div class="empty-state"><div class="empty-icon">👤</div><p>Nenhum usuário cadastrado.</p></div>';
     return;
   }
+  const isMaster = currentUser?.nivel_acesso === 'master';
   document.getElementById('usuarios-table-body').innerHTML = `<table>
-    <thead><tr><th>Nome</th><th>Perfil</th><th>Casa</th><th>Ações</th></tr></thead>
-    <tbody>${data.map(u => `<tr>
-      <td><strong>${u.nome}</strong></td>
-      <td><span class="badge ${u.perfil==='admin'?'badge-confirmado':u.perfil==='comercial'?'badge-realizado':'badge-rascunho'}">${u.perfil}</span></td>
-      <td>${u.casa || '—'}</td>
-      <td>
-        <button class="btn btn-outline btn-sm" onclick="abrirModalUsuario(${u.id},'${u.nome}','${u.perfil}','${u.casa||''}')">Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="excluirUsuario(${u.id},'${u.nome}')">Excluir</button>
-      </td>
-    </tr>`).join('')}</tbody>
+    <thead><tr><th>Nome</th><th>Email</th><th>Perfil</th><th>Nível</th><th>Casa</th><th>Ações</th></tr></thead>
+    <tbody>${data.map(u => {
+      const nomeEsc = (u.nome||'').replace(/'/g,"\\'");
+      const nivelBadge = {master:'badge-confirmado',admin:'badge-confirmado',comercial:'badge-realizado',operacional:'badge-rascunho'}[u.nivel_acesso] || 'badge-rascunho';
+      const perfilBadge = u.perfil==='admin'?'badge-confirmado':u.perfil==='comercial'?'badge-realizado':'badge-rascunho';
+      const podeExcluirEste = u.nivel_acesso !== 'master';
+      return `<tr>
+        <td><strong>${u.nome||'—'}</strong></td>
+        <td style="font-size:12px;color:var(--text-muted)">${u.email||'—'}</td>
+        <td><span class="badge ${perfilBadge}">${u.perfil||'—'}</span></td>
+        <td><span class="badge ${nivelBadge}">${u.nivel_acesso||'—'}</span></td>
+        <td>${u.casa||'—'}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-outline btn-sm" onclick="abrirModalUsuario('${u.id}','${nomeEsc}','${u.perfil||''}','${u.casa||''}','${u.email||''}','${u.nivel_acesso||''}')">Editar</button>
+          ${u.auth_id ? `<button class="btn btn-ghost btn-sm" onclick="abrirModalResetSenha('${u.auth_id}','${nomeEsc}')">🔑</button>` : ''}
+          ${podeExcluirEste ? `<button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}','${nomeEsc}','${u.auth_id||''}')">🗑️</button>` : ''}
+        </td>
+      </tr>`;
+    }).join('')}</tbody>
   </table>`;
 }
 
-function abrirModalUsuario(id, nome, perfil, casa) {
+function abrirModalUsuario(id, nome, perfil, casa, email, nivel) {
   document.getElementById('modal-usuario-id').value = id || '';
   document.getElementById('modal-nome').value = nome || '';
+  document.getElementById('modal-email').value = email || '';
+  document.getElementById('modal-senha-inicial').value = '';
   document.getElementById('modal-perfil').value = perfil || 'operacional';
+  document.getElementById('modal-nivel').value = nivel || 'operacional';
   document.getElementById('modal-casa').value = casa || 'MEET & EAT';
   document.getElementById('modal-usuario-title').textContent = id ? 'Editar Usuário' : 'Novo Usuário';
+  document.getElementById('modal-senha-field').style.display = id ? 'none' : 'block';
   document.getElementById('modal-alert').style.display = 'none';
   document.getElementById('modal-usuario').style.display = 'flex';
 }
@@ -1695,36 +1824,67 @@ function fecharModalUsuario() {
 }
 
 async function salvarUsuario() {
-  const id = document.getElementById('modal-usuario-id').value;
-  const nome = document.getElementById('modal-nome').value.trim();
+  const id    = document.getElementById('modal-usuario-id').value;
+  const nome  = document.getElementById('modal-nome').value.trim();
+  const email = document.getElementById('modal-email').value.trim();
+  const senha = document.getElementById('modal-senha-inicial').value;
   const perfil = document.getElementById('modal-perfil').value;
-  const casa = document.getElementById('modal-casa').value;
+  const nivel  = document.getElementById('modal-nivel').value;
+  const casa   = document.getElementById('modal-casa').value;
 
-  if (!nome) { showModalAlert('Preencha o nome.', 'error'); return; }
+  if (!nome)  { showModalAlert('Preencha o nome.', 'error'); return; }
+  if (!id && !email) { showModalAlert('Preencha o email.', 'error'); return; }
+  if (!id && !senha) { showModalAlert('Preencha a senha inicial.', 'error'); return; }
+
   showModalAlert('Salvando...', 'success');
 
-  let result;
   if (id) {
     const q = new SBQuery('usuarios');
     q.eq('id', id);
-    result = await q.update({ nome, perfil, casa });
+    const result = await q.update({ nome, email, perfil, nivel_acesso: nivel, casa });
+    if (result.error) { showModalAlert('Erro: ' + result.error, 'error'); return; }
   } else {
+    const authResult = await sbAdmin('POST', '/auth/v1/admin/users', { email, password: senha, email_confirm: true });
+    if (authResult.error) { showModalAlert('Erro ao criar acesso: ' + authResult.error, 'error'); return; }
+    const authId = authResult.data.id;
     const q = new SBQuery('usuarios');
-    result = await q.insert({ nome, perfil, casa });
+    const result = await q.insert({ nome, email, perfil, nivel_acesso: nivel, casa, auth_id: authId });
+    if (result.error) { showModalAlert('Erro ao salvar perfil: ' + result.error, 'error'); return; }
   }
 
-  if (result.error) { showModalAlert('Erro: ' + result.error, 'error'); return; }
   fecharModalUsuario();
   loadUsuarios();
 }
 
-async function excluirUsuario(id, nome) {
-  if (!confirm(`Excluir o usuário "${nome}"?`)) return;
+async function excluirUsuario(id, nome, authId) {
+  if (!confirm(`Excluir o usuário "${nome}"? Esta ação não pode ser desfeita.`)) return;
   const q = new SBQuery('usuarios');
   q.eq('id', id);
   const { error } = await q.delete();
   if (error) { alert('Erro ao excluir: ' + error); return; }
+  if (authId) await sbAdmin('DELETE', `/auth/v1/admin/users/${authId}`);
   loadUsuarios();
+}
+
+function abrirModalResetSenha(authId, nome) {
+  document.getElementById('modal-reset-auth-id').value = authId;
+  document.getElementById('modal-reset-nome').textContent = 'Usuário: ' + nome;
+  document.getElementById('modal-reset-nova').value = '';
+  document.getElementById('modal-reset-alert').style.display = 'none';
+  document.getElementById('modal-reset-senha').style.display = 'flex';
+}
+
+async function confirmarResetSenha() {
+  const authId = document.getElementById('modal-reset-auth-id').value;
+  const nova   = document.getElementById('modal-reset-nova').value;
+  const alertEl = document.getElementById('modal-reset-alert');
+  const show = (msg, type) => { alertEl.style.display='block'; alertEl.className='alert alert-'+type; alertEl.textContent=msg; };
+  if (!nova || nova.length < 6) { show('Mínimo 6 caracteres.', 'error'); return; }
+  show('Atualizando...', 'success');
+  const { error } = await sbAdmin('PUT', `/auth/v1/admin/users/${authId}`, { password: nova });
+  if (error) { show('Erro: ' + error, 'error'); return; }
+  show('Senha resetada com sucesso!', 'success');
+  setTimeout(() => { document.getElementById('modal-reset-senha').style.display='none'; }, 1500);
 }
 
 function showModalAlert(msg, type) {
@@ -1735,10 +1895,29 @@ function showModalAlert(msg, type) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// TROCA DE SENHA — removida (sistema sem senha)
+// TROCA DE SENHA
 // ══════════════════════════════════════════════════════════════════════
-function trocarSenha() {
-  showSenhaAlert('Sistema sem senha — login por nome.', 'success');
+async function trocarSenha() {
+  const nova     = document.getElementById('senha-nova').value;
+  const confirma = document.getElementById('senha-confirma').value;
+  if (!nova || !confirma) { showSenhaAlert('Preencha todos os campos.', 'error'); return; }
+  if (nova !== confirma)  { showSenhaAlert('Nova senha e confirmação não batem.', 'error'); return; }
+  if (nova.length < 6)    { showSenhaAlert('A senha deve ter pelo menos 6 caracteres.', 'error'); return; }
+  showSenhaAlert('Atualizando...', 'success');
+  const resp = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    method: 'PUT',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + currentUser.token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: nova })
+  });
+  if (!resp.ok) {
+    const d = await resp.json();
+    showSenhaAlert('Erro: ' + sbError(d, 'Não foi possível alterar a senha.'), 'error');
+    return;
+  }
+  showSenhaAlert('Senha alterada com sucesso!', 'success');
+  document.getElementById('senha-atual').value = '';
+  document.getElementById('senha-nova').value  = '';
+  document.getElementById('senha-confirma').value = '';
 }
 
 function showSenhaAlert(msg, type) {
@@ -1775,8 +1954,12 @@ function atualizarResumo() {
   document.getElementById('resumo-pax').textContent = pax ? `${pax} pax` : '—';
 }
 
-// Fechar modal clicando fora
+// Fechar modais clicando fora
 document.getElementById('modal-usuario').addEventListener('click', function(e) { if (e.target === this) fecharModalUsuario(); });
+document.getElementById('modal-reset-senha').addEventListener('click', function(e) { if (e.target === this) this.style.display='none'; });
+
+// Verificar sessão ao carregar
+checkSession();
 
 // Wiring — atualiza resumo ao digitar
 ['f-nome','f-espacos','f-data-inicio','f-hora-inicio','f-hora-termino','f-pax'].forEach(id => {
