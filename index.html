@@ -225,6 +225,7 @@
     .main { padding: 20px; }
   }
   @media print {
+    * { font-weight: bold !important; }
     .sidebar, .page-header, .os-view-actions { display: none !important; }
     .app-shell { display: block !important; }
     .main { padding: 0 !important; }
@@ -1250,6 +1251,13 @@ function showOSAlert(msg, type) {
 // ══════════════════════════════════════════════════════════════════════
 // VER / EDITAR
 // ══════════════════════════════════════════════════════════════════════
+async function salvarStatusView(novoStatus) {
+  if (!currentViewId) return;
+  const q = new SBQuery('eventos');
+  q.eq('id', currentViewId);
+  await q.update({ status: novoStatus, updated_at: new Date().toISOString() });
+}
+
 async function verOS(id) {
   currentViewId = id;
   const q = new SBQuery('eventos');
@@ -1269,7 +1277,11 @@ async function verOS(id) {
       <div class="os-view-header">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
           <div class="os-view-title">${tituloOS(e)}</div>
-          <span class="badge badge-${e.status}">${e.status}</span>
+          <select onchange="salvarStatusView(this.value)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 10px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer">
+            ${[['rascunho','Rascunho'],['finalizado','Finalizado'],['pago','Pago']].map(([val,label]) =>
+              `<option value="${val}" ${e.status === val ? 'selected' : ''}>${label}</option>`
+            ).join('')}
+          </select>
         </div>
         <div class="os-meta">
           <div class="os-meta-item">Casa: <strong>${e.casa||'—'}</strong></div>
