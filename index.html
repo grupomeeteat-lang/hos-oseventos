@@ -1788,7 +1788,7 @@ async function loadUsuarios() {
       const nomeEsc = (u.nome||'').replace(/'/g,"\\'");
       const nivelBadge = {master:'badge-confirmado',admin:'badge-confirmado',comercial:'badge-realizado',operacional:'badge-rascunho'}[u.nivel_acesso] || 'badge-rascunho';
       const perfilBadge = u.perfil==='admin'?'badge-confirmado':u.perfil==='comercial'?'badge-realizado':'badge-rascunho';
-      const podeExcluirEste = u.nivel_acesso !== 'master';
+      const podeExcluirEste = u.nivel_acesso !== 'master' && u.auth_id !== currentUser?.auth_id;
       return `<tr>
         <td><strong>${u.nome||'—'}</strong></td>
         <td style="font-size:12px;color:var(--text-muted)">${u.email||'—'}</td>
@@ -1857,13 +1857,47 @@ async function salvarUsuario() {
 }
 
 async function excluirUsuario(id, nome, authId) {
-  if (!confirm(`Excluir o usuário "${nome}"? Esta ação não pode ser desfeita.`)) return;
-  const q = new SBQuery('usuarios');
-  q.eq('id', id);
-  const { error } = await q.delete();
-  if (error) { alert('Erro ao excluir: ' + error); return; }
-  if (authId) await sbAdmin('DELETE', `/auth/v1/admin/users/${authId}`);
-  loadUsuarios();
+  console.log('[excluirUsuario] chamado:', { id, nome, authId });
+
+  // Bloqueia exclusão do master
+  if (!id) { alert('ID do usuário inválido.'); return; }
+  if (!confirm(`Excluir o usuário "${nome}"?\n\nEsta ação não pode ser desfeita.`)) {
+    console.log('[excluirUsuario] cancelado pelo usuário');
+    return;
+  }
+
+  try {
+    // 1. Deleta do Supabase Auth (primeiro, para não ficar órfão)
+    if (authId) {
+      console.log('[excluirUsuario] deletando do Auth:', authId);
+      const authResult = await sbAdmin('DELETE', `/auth/v1/admin/users/${authId}`);
+      if (authResult.error) {
+        console.warn('[excluirUsuario] erro no Auth (continuando):', authResult.error);
+        // Não aborta — pode ser que service key não esteja configurada ainda
+      } else {
+        console.log('[excluirUsuario] Auth: OK');
+      }
+    } else {
+      console.warn('[excluirUsuario] sem auth_id — pulando deleção do Auth');
+    }
+
+    // 2. Deleta da tabela usuarios
+    console.log('[excluirUsuario] deletando da tabela usuarios:', id);
+    const q = new SBQuery('usuarios');
+    q.eq('id', id);
+    const { error } = await q.delete();
+    if (error) {
+      console.error('[excluirUsuario] erro na tabela:', error);
+      alert('Erro ao excluir usuário: ' + error);
+      return;
+    }
+    console.log('[excluirUsuario] tabela: OK');
+
+    loadUsuarios();
+  } catch (e) {
+    console.error('[excluirUsuario] exceção:', e);
+    alert('Erro inesperado: ' + e.message);
+  }
 }
 
 function abrirModalResetSenha(authId, nome) {
