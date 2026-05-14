@@ -911,8 +911,8 @@ async function sbAdmin(method, path, body) {
   });
   const text = await resp.text();
   let data; try { data = JSON.parse(text); } catch { data = {}; }
-  if (!resp.ok) return { data: null, error: sbError(data, text) };
-  return { data, error: null };
+  if (!resp.ok) return { data: null, error: sbError(data, text), status: resp.status };
+  return { data, error: null, status: resp.status };
 }
 
 function sbError(data, text) {
@@ -1857,41 +1857,35 @@ async function salvarUsuario() {
 }
 
 async function excluirUsuario(id, nome, authId) {
-  console.log('[excluirUsuario] chamado:', { id, nome, authId });
-
-  // Bloqueia exclusão do master
   if (!id) { alert('ID do usuário inválido.'); return; }
-  if (!confirm(`Excluir o usuário "${nome}"?\n\nEsta ação não pode ser desfeita.`)) {
-    console.log('[excluirUsuario] cancelado pelo usuário');
-    return;
-  }
+  if (!confirm(`Excluir o usuário "${nome}"?\n\nEsta ação não pode ser desfeita.`)) return;
+
+  console.log('[1] Iniciando exclusão', { id, authId });
 
   try {
-    // 1. Deleta do Supabase Auth (primeiro, para não ficar órfão)
+    // 1. Deleta do Supabase Auth
     if (authId) {
-      console.log('[excluirUsuario] deletando do Auth:', authId);
+      console.log('[2] Deletando do Auth...');
       const authResult = await sbAdmin('DELETE', `/auth/v1/admin/users/${authId}`);
+      console.log('[3] Resposta Auth:', authResult.status, authResult.error || 'OK');
       if (authResult.error) {
-        console.warn('[excluirUsuario] erro no Auth (continuando):', authResult.error);
-        // Não aborta — pode ser que service key não esteja configurada ainda
-      } else {
-        console.log('[excluirUsuario] Auth: OK');
+        // Não aborta — a tabela ainda precisa ser limpa
+        console.warn('[3] Aviso: falha no Auth (service key configurada?):', authResult.error);
       }
     } else {
-      console.warn('[excluirUsuario] sem auth_id — pulando deleção do Auth');
+      console.warn('[2] sem auth_id — pulando deleção do Auth');
     }
 
     // 2. Deleta da tabela usuarios
-    console.log('[excluirUsuario] deletando da tabela usuarios:', id);
+    console.log('[4] Deletando da tabela...');
     const q = new SBQuery('usuarios');
     q.eq('id', id);
-    const { error } = await q.delete();
-    if (error) {
-      console.error('[excluirUsuario] erro na tabela:', error);
-      alert('Erro ao excluir usuário: ' + error);
+    const { error: tblError } = await q.delete();
+    console.log('[5] Resposta tabela:', tblError || 'OK');
+    if (tblError) {
+      alert('Erro ao excluir usuário: ' + tblError);
       return;
     }
-    console.log('[excluirUsuario] tabela: OK');
 
     loadUsuarios();
   } catch (e) {
