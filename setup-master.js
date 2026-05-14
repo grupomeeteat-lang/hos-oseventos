@@ -122,7 +122,8 @@ async function main() {
   const checkResult = await restFetch('GET', `/usuarios?auth_id=eq.${authId}&select=id`);
   const existingRow = Array.isArray(checkResult.data) && checkResult.data.length > 0;
 
-  const profileData = {
+  // Começa com todos os campos; remove colunas inexistentes automaticamente
+  let profileData = {
     auth_id:      authId,
     nome:         MASTER.nome,
     email:        MASTER.email,
@@ -131,13 +132,30 @@ async function main() {
     casa:         MASTER.casa,
   };
 
+  async function upsertPerfil(method, path, data) {
+    let payload = { ...data };
+    for (let tentativa = 1; tentativa <= 5; tentativa++) {
+      const result = await restFetch(method, path, payload);
+      if (result.ok) return result;
+      // PGRST204 = coluna não existe no schema cache
+      if (result.data?.code === 'PGRST204') {
+        const col = result.data.message?.match(/find the '(.+?)' column/)?.[1];
+        if (col && payload[col] !== undefined) {
+          console.log(`     ⚠ Coluna '${col}' não existe — removendo e tentando novamente...`);
+          delete payload[col];
+          continue;
+        }
+      }
+      console.error(`     ✗ Erro (tentativa ${tentativa}):`, JSON.stringify(result.data));
+      process.exit(1);
+    }
+  }
+
   if (existingRow) {
-    const upd = await restFetch('PATCH', `/usuarios?auth_id=eq.${authId}`, profileData);
-    if (!upd.ok) { console.error('     ✗ Erro ao atualizar:', JSON.stringify(upd.data)); process.exit(1); }
+    await upsertPerfil('PATCH', `/usuarios?auth_id=eq.${authId}`, profileData);
     console.log('     ✓ Perfil atualizado.');
   } else {
-    const ins = await restFetch('POST', '/usuarios', profileData);
-    if (!ins.ok) { console.error('     ✗ Erro ao inserir:', JSON.stringify(ins.data)); process.exit(1); }
+    await upsertPerfil('POST', '/usuarios', profileData);
     console.log('     ✓ Perfil inserido.');
   }
 
